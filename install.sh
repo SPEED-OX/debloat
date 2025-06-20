@@ -5,43 +5,41 @@ function print_message() {
     echo -e "\n\033[1;34m$1\033[0m"
 }
 
+# Update and upgrade packages
+print_message "Updating and upgrading packages..."
+pkg update && pkg upgrade -y
+
+# Install Python and Android tools
+print_message "Installing Python and Android tools..."
+pkg install python android-tools -y
+
 # Create the main debloater directory
 print_message "Creating the debloater directory structure..."
 mkdir -p ~/debloater/lists
-
-# Create sample bloatware lists (you can replace these with your actual files later)
-cat <<EOF > ~/debloater/lists/realme.txt
-# Sample bloatware list for Realme
-AppName pm uninstall ... com.realme.bloatware
-AnotherApp pm uninstall ... com.realme.anotherbloat
-EOF
-
-cat <<EOF > ~/debloater/lists/xiaomi.txt
-# Sample bloatware list for Xiaomi
-AppName pm uninstall ... com.xiaomi.bloatware
-AnotherApp ➡️ com.xiaomi.anotherbloat
-EOF
 
 # Create the debloater.py file
 cat <<EOF > ~/debloater/debloater.py
 #!/usr/bin/env python3
 
-"""
+\"\"\"
 Universal Android Bloatware Remover
 -----------------------------------
 This script detects the connected Android device's brand and uses the corresponding
 bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
-"""
+\"\"\"
 
 import os
 import re
 import subprocess
 import sys
 
-SUPPORT_GROUP_URL = "https://t.me/your_support_group"  # Replace with your actual support link
+SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"  # Replace with your actual support link
 
 def get_device_brand():
-    """Attempts to detect the Android device brand using adb."""
+    \"\"\"
+    Attempts to detect the Android device brand using adb.
+    Returns the brand as a lowercase string, or None if detection fails.
+    \"\"\"
     try:
         result = subprocess.run(
             ['adb', 'shell', 'getprop', 'ro.product.brand'],
@@ -61,7 +59,10 @@ def get_device_brand():
         return None
 
 def find_brand_file(lists_dir, brand):
-    """Looks for a bloatware list file corresponding to the given brand."""
+    \"\"\"
+    Looks for a bloatware list file corresponding to the given brand.
+    Returns the full path if found, otherwise None.
+    \"\"\"
     files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
     if not files:
         print("[Error] No bloatware lists found in the lists/ directory.")
@@ -78,7 +79,10 @@ def find_brand_file(lists_dir, brand):
     return None
 
 def manual_brand_file_selection(lists_dir):
-    """Allows the user to manually select a bloatware list file."""
+    \"\"\"
+    Allows the user to manually select a bloatware list file.
+    Returns the full path to the selected file.
+    \"\"\"
     files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
     print("Available bloatware lists:")
     for idx, f in enumerate(files):
@@ -94,7 +98,9 @@ def manual_brand_file_selection(lists_dir):
             print("Invalid input. Please enter a number corresponding to the list.")
 
 def parse_bloatware_file(filepath):
-    """Parses the specified bloatware list file, extracting tuples of (app_name, package_name)."""
+    \"\"\"
+    Parses the specified bloatware list file, extracting tuples of (app_name, package_name).
+    \"\"\"
     apps = []
     with open(filepath, 'r', encoding='utf-8') as f:
         for line in f:
@@ -119,7 +125,11 @@ def parse_bloatware_file(filepath):
     return apps
 
 def choose_app_and_action(apps):
-    """Presents the list of apps and prompts the user to select one or all, then choose the desired action."""
+    \"\"\"
+    Presents the list of apps and prompts the user to select one or all,
+    then choose the desired action.
+    Returns a tuple (indices, action).
+    \"\"\"
     print("\nAvailable applications:")
     for idx, (app, package) in enumerate(apps):
         print(f"{idx+1}. {app} ({package})")
@@ -152,7 +162,10 @@ def choose_app_and_action(apps):
             print("Invalid input. Please enter a number between 1 and 5.")
 
 def run_adb_command(package, action):
-    """Executes the appropriate adb command for the selected action and package."""
+    \"\"\"
+    Executes the appropriate adb command for the selected action and package.
+    Outputs the result or error.
+    \"\"\"
     if action == 1:
         cmd = f'adb shell pm uninstall -k --user 0 {package}'
     elif action == 2:
@@ -204,6 +217,19 @@ EOF
 
 # Make the debloater.py file executable
 chmod +x ~/debloater/debloater.py
+
+# Create sample bloatware list files
+cat <<EOF > ~/debloater/lists/realme.txt
+# Sample bloatware list for Realme
+AppName pm uninstall ... com.realme.bloatware
+AnotherApp pm uninstall ... com.realme.anotherbloat
+EOF
+
+cat <<EOF > ~/debloater/lists/xiaomi.txt
+# Sample bloatware list for Xiaomi
+AppName pm uninstall ... com.xiaomi.bloatware
+AnotherApp ➡️ com.xiaomi.anotherbloat
+EOF
 
 print_message "Installation complete! Your directory structure is ready."
 
