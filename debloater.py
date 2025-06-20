@@ -1,100 +1,173 @@
-import subprocess
+import os
 import re
-from pathlib import Path
+import subprocess
+import sys
 
-# Install location structure
-ROOT_DIR = Path(__file__).parent
-LISTS_DIR = ROOT_DIR / "lists"
+TELEGRAM_GROUP = "https://t.me/TechGeekZ_chat"  # <-- put your actual group link here
 
-def run(cmd):
-    return subprocess.run(cmd, capture_output=True, text=True)
+def print_help_message(error_msg=None):
+    print("\n" + "="*60)
+    print("⚠️  An issue occurred during device brand detection.")
+    if error_msg:
+        print(f"Error details: {error_msg}")
+    print("For support, please join our Telegram group:")
+    print(TELEGRAM_GROUP)
+    print("="*60 + "\n")
 
-def parse_txt_file(txt_path):
-    raw = txt_path.read_text(encoding='utf-8', errors='ignore')
-    packages = re.findall(r'(?:com|cn)(?:\.[a-zA-Z0-9_]+)+', raw)
-    return list(set(packages))
+def get_device_brand():
+    try:
+        result = subprocess.run(
+            ['adb', 'shell', 'getprop', 'ro.product.brand'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode != 0:
+            print_help_message(result.stderr.strip())
+            return None
+        brand = result.stdout.strip().lower()
+        if not brand:
+            print_help_message("No output received from adb shell getprop.")
+            return None
+        print(f"✅ Detected device brand: {brand}")
+        return brand
+    except Exception as e:
+        print_help_message(str(e))
+        return None
 
-def get_all_listed_packages():
-    all_packages = set()
-    for txt_file in LISTS_DIR.glob("*.txt"):
-        pkgs = parse_txt_file(txt_file)
-        all_packages.update(pkgs)
-    return sorted(all_packages)
+def find_brand_file(lists_dir, brand):
+    files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
+    if not files:
+        print("No bloatware lists found in the lists/ directory.")
+        sys.exit(1)
+    if not brand:
+        return None
+    # Try exact or partial match
+    for f in files:
+        if f.startswith(brand):
+            print(f"📝 Using list: {f} for brand: {brand}")
+            return os.path.join(lists_dir, f)
+    print(f"\n⚠️  No list found for detected brand: {brand}.")
+    print("This brand is currently unsupported or being updated.")
+    print("Request support or report your device in our Telegram group:")
+    print(TELEGRAM_GROUP)
+    print()
+    return None
 
-def get_installed_packages():
-    result = run(['adb', 'shell', 'pm', 'list', 'packages'])
-    return set(line.replace("package:", "").strip() for line in result.stdout.splitlines())
+def manual_brand_file_selection(lists_dir):
+    files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
+    print("Available bloatware lists:")
+    for idx, f in enumerate(files):
+        print(f"{idx+1}. {f.replace('.txt','')}")
+    while True:
+        try:
+            idx = int(input("Select a brand by number: ").strip()) - 1
+            if 0 <= idx < len(files):
+                return os.path.join(lists_dir, files[idx])
+            else:
+                print("Invalid selection. Try again.")
+        except Exception:
+            print("Invalid input. Please enter a number.")
 
-def uninstall(pkg, keep_data):
-    cmd = ['adb', 'shell', 'pm', 'uninstall']
-    if keep_data:
-        cmd.append('-k')
-    cmd += ['--user', '0', pkg]
-    run(cmd)
-    print(f"🗑️ Uninstalled ({'kept data' if keep_data else 'full'}): {pkg}")
+def parse_bloatware_file(filepath):
+    apps = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            # Format 1: "AppName pm uninstall ... package.name"
+            match = re.match(r'(.+?)(?:\s+pm\s+\w+[\w\s\-–—]+)?\s+([a-zA-Z0-9_.]+)$', line)
+            if match:
+                app, package = match.group(1), match.group(2)
+                apps.append( (app.strip(), package.strip()) )
+                continue
+            # Format 2: "AppName ➡️ package.name"
+            arrow_match = re.match(r'(.+?)\s*[➡️]\s*([a-zA-Z0-9_.]+)$', line)
+            if arrow_match:
+                app, package = arrow_match.group(1), arrow_match.group(2)
+                apps.append( (app.strip(), package.strip()) )
+                continue
+            # Format 3: "package.name - description" or "package.name"
+            package_only = re.match(r'^([a-zA-Z0-9_.]+)(?:\s*-\s*.+)?$', line)
+            if package_only:
+                package = package_only.group(1)
+                app = package
+                apps.append( (app.strip(), package.strip()) )
+    return apps
 
-def restore(pkg):
-    result = run(['adb', 'shell', 'cmd', 'package', 'install-existing', pkg])
-    if 'installed' in result.stdout.lower():
-        print(f"🔁 Restored: {pkg}")
+def choose_app_and_action(apps):
+    print("\nAvailable apps:")
+    for idx, (app, package) in enumerate(apps):
+        print(f"{idx+1}. {app} ({package})")
+    print("0. [Batch] Select ALL apps")
+    while True:
+        selected = input("Enter app number (or 0 for all): ").strip()
+        if selected == '0':
+            indices = list(range(len(apps)))
+            break
+        try:
+            idx = int(selected) - 1
+            if 0 <= idx < len(apps):
+                indices = [idx]
+                break
+            else:
+                print("Invalid selection. Try again.")
+        except Exception:
+            print("Invalid input. Please enter a number.")
+    print("\nChoose action:")
+    print("1. Uninstall (keep data)")
+    print("2. Uninstall (full)")
+    print("3. Reinstall")
+    print("4. Disable")
+    print("5. Enable")
+    while True:
+        action = input("Enter action number: ").strip()
+        if action in {'1','2','3','4','5'}:
+            return indices, int(action)
+        else:
+            print("Invalid input. Please enter a number from 1 to 5.")
+
+def run_adb_command(package, action):
+    if action == 1:
+        cmd = f'adb shell pm uninstall -k --user 0 {package}'
+    elif action == 2:
+        cmd = f'adb shell pm uninstall --user 0 {package}'
+    elif action == 3:
+        cmd = f'adb shell cmd package install-existing {package}'
+    elif action == 4:
+        cmd = f'adb shell pm disable-user --user 0 {package}'
+    elif action == 5:
+        cmd = f'adb shell pm enable {package}'
     else:
-        print(f"⚠️ Failed to restore: {pkg}")
-
-def disable(pkg):
-    result = run(['adb', 'shell', 'pm', 'disable-user', '--user', '0', pkg])
-    if 'new state: disabled' in result.stdout.lower():
-        print(f"🚫 Disabled: {pkg}")
-    else:
-        print(f"⚠️ Failed to disable: {pkg}")
-
-def enable(pkg):
-    result = run(['adb', 'shell', 'pm', 'enable', pkg])
-    if 'new state: enabled' in result.stdout.lower():
-        print(f"✅ Enabled: {pkg}")
-    else:
-        print(f"⚠️ Failed to enable: {pkg}")
-
-def choose_action(pkg):
-    print(f"\n📦 {pkg}")
-    print(" [1] Uninstall (keep data)")
-    print(" [2] Uninstall (full wipe)")
-    print(" [3] Restore")
-    print(" [4] Disable")
-    print(" [5] Enable")
-    print(" [Enter] Skip")
-
-    choice = input("→ Your choice: ").strip()
-    if choice == '1':
-        uninstall(pkg, keep_data=True)
-    elif choice == '2':
-        uninstall(pkg, keep_data=False)
-    elif choice == '3':
-        restore(pkg)
-    elif choice == '4':
-        disable(pkg)
-    elif choice == '5':
-        enable(pkg)
-    else:
-        print("⏩ Skipped.")
+        print("Unknown action")
+        return
+    print(f"Running: {cmd}")
+    try:
+        result = subprocess.run(cmd.split(), capture_output=True, text=True)
+        print(result.stdout.strip() or result.stderr.strip())
+    except Exception as e:
+        print(f"Error executing command: {e}")
+        print("If you need help, please join our Telegram group:")
+        print(TELEGRAM_GROUP)
 
 def main():
-    print("📋 Loading bloatware package lists...")
-    declared = get_all_listed_packages()
-    installed = get_installed_packages()
-    matches = [pkg for pkg in declared if pkg in installed]
-
-    if not matches:
-        print("✅ No listed bloatware is installed.")
-        return
-
-    print(f"\n🔍 Found {len(matches)} matching packages installed on device:\n")
-    for i, pkg in enumerate(matches):
-        print(f"{i:2d}: {pkg}")
-
-    input("\n🔧 Press Enter to begin managing apps...\n")
-
-    for pkg in matches:
-        choose_action(pkg)
+    print("=== Universal Android Bloatware Remover ===\n")
+    lists_dir = os.path.join(os.path.dirname(__file__), 'lists')
+    brand = get_device_brand()
+    file_path = find_brand_file(lists_dir, brand)
+    if not file_path:
+        print("Proceeding to manual selection...\n")
+        file_path = manual_brand_file_selection(lists_dir)
+    apps = parse_bloatware_file(file_path)
+    if not apps:
+        print("No apps parsed from the list. Please check your bloatware list file format.")
+        print("If you need help, join our Telegram group:")
+        print(TELEGRAM_GROUP)
+        sys.exit(1)
+    indices, action = choose_app_and_action(apps)
+    for idx in indices:
+        app, package = apps[idx]
+        print(f"\nProcessing: {app} ({package})")
+        run_adb_command(package, action)
 
 if __name__ == '__main__':
     main()
