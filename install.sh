@@ -10,7 +10,7 @@ set -e
 REPO_URL="https://github.com/SPEED-OX/debloate"
 SCRIPT_DIR="$HOME/debloate"
 ALIAS_CMD='debloate'
-SUPPORT_URL="https://t.me/your_support_group"  # Change to your actual support link
+SUPPORT_URL="https://t.me/TechGeekZ_chat"  # Change to your actual support link
 
 # -------- Progress bar function --------
 progress_bar() {
