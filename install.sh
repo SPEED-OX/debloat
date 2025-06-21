@@ -28,8 +28,8 @@ fi
 
 # User tracking and initial upgrade
 if [ ! -f "$DEBLOATER_USERS" ]; then
-    echo -ne "\r${GREEN_COLOR}pkg upgrade${RESET_COLOR} ..."
-    pkg upgrade -y > /dev/null 2>&1
+    echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
+    apt upgrade -y > /dev/null 2>&1
     curl -Is https://github.com/SPEED-OX/debloate/releases/download/tracking/totalusers > /dev/null 2>&1
     touch "$DEBLOATER_USERS"
 fi
@@ -64,12 +64,12 @@ elif [ $exit_code -eq 35 ]; then
     exit 35
 fi
 
-echo -ne "\r${GREEN_COLOR}pkg update${RESET_COLOR} ..."
-pkg update -y > /dev/null 2>&1
+echo -ne "\r${GREEN_COLOR}apt update${RESET_COLOR} ..."
+apt update > /dev/null 2>&1
 
 # Progress tracking system
 charit=1
-total=6
+total=7
 start_time=$(date +%s)
 
 _progress() {
@@ -86,58 +86,59 @@ _progress() {
 
 _progress
 
-# Essential packages for debloater (only python and android-tools)
-packages=(
-    "python"
-    "android-tools"
-)
+# Install python3
+echo -ne "\r${GREEN_COLOR}Installing python3${RESET_COLOR} ..."
+pkg install python3 -y >/dev/null 2>&1
 
-# Install/update packages
-for package in "${packages[@]}"; do
-    installed=$(pkg list-installed 2>/dev/null | grep "^$package/" | cut -d'/' -f1)
-    if [ -z "$installed" ]; then
-        pkg install "$package" -y >/dev/null 2>&1
-    fi
-    _progress
-done
+_progress
+
+# Install android-tools
+echo -ne "\r${GREEN_COLOR}Installing android-tools${RESET_COLOR} ..."
+pkg install android-tools -y >/dev/null 2>&1
+
+_progress
+
+# Install unzip if not available
+if ! command -v unzip >/dev/null 2>&1; then
+    pkg install unzip -y >/dev/null 2>&1
+fi
 
 # Download and extract repository as zip
 echo -ne "\r${GREEN_COLOR}Downloading repository${RESET_COLOR} ..."
-cd /tmp
-curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloater.zip
+cd "$HOME"
+curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloate.zip
+
+_progress
 
 # Extract zip file
-if command -v unzip >/dev/null 2>&1; then
-    unzip -q debloater.zip
-else
-    # Install unzip if not available
-    pkg install unzip -y >/dev/null 2>&1
-    unzip -q debloater.zip
-fi
+echo -ne "\r${GREEN_COLOR}Extracting files${RESET_COLOR} ..."
+unzip -q debloate.zip
 
 _progress
 
 # Create installation directory and copy files
+echo -ne "\r${GREEN_COLOR}Setting up files${RESET_COLOR} ..."
+rm -rf "$INSTALL_DIR" 2>/dev/null
 mkdir -p "$INSTALL_DIR"
 
 # Copy main script
-if [ -f "/tmp/debloate-main/debloater.py" ]; then
-    cp "/tmp/debloate-main/debloater.py" "$INSTALL_DIR/"
+if [ -f "$HOME/debloate-main/debloater.py" ]; then
+    cp "$HOME/debloate-main/debloater.py" "$INSTALL_DIR/"
     chmod +x "$INSTALL_DIR/debloater.py"
 fi
 
 # Copy lists directory
-if [ -d "/tmp/debloate-main/lists" ]; then
-    cp -r "/tmp/debloate-main/lists" "$INSTALL_DIR/"
+if [ -d "$HOME/debloate-main/lists" ]; then
+    cp -r "$HOME/debloate-main/lists" "$INSTALL_DIR/"
 fi
 
 # Clean up temporary files
-rm -rf /tmp/debloater.zip /tmp/debloate-main
+rm -rf "$HOME/debloate.zip" "$HOME/debloate-main"
 
 _progress
 
 # Create executable wrapper script
-cat > "$PREFIX/bin/debloater" << 'EOF'
+cat > "$PREFIX/bin/debloat" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
 
 # Universal Android Bloatware Remover Wrapper
@@ -159,9 +160,9 @@ if [ ! -f "$DEBLOATER_SCRIPT" ]; then
 fi
 
 # Check if Python is available
-if ! command -v python >/dev/null 2>&1; then
+if ! command -v python >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
     echo -e "${RED_COLOR}[ERROR]${RESET_COLOR} Python is not installed or not in PATH"
-    echo -e "Please install Python: ${GREEN_COLOR}pkg install python${RESET_COLOR}"
+    echo -e "Please install Python: ${GREEN_COLOR}pkg install python3${RESET_COLOR}"
     exit 1
 fi
 
@@ -174,16 +175,22 @@ fi
 
 # Change to debloater directory and run the script
 cd "$DEBLOATER_DIR"
-python "$DEBLOATER_SCRIPT" "$@"
+
+# Use python3 if available, otherwise python
+if command -v python3 >/dev/null 2>&1; then
+    python3 "$DEBLOATER_SCRIPT" "$@"
+else
+    python "$DEBLOATER_SCRIPT" "$@"
+fi
 EOF
 
-chmod +x "$PREFIX/bin/debloater"
+chmod +x "$PREFIX/bin/debloat"
 
 _progress
 
 # Create alias in .bashrc for persistent access
 if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
-    echo "alias debloat='$PREFIX/bin/debloater'" >> "$HOME/.bashrc"
+    echo "alias debloat='$PREFIX/bin/debloat'" >> "$HOME/.bashrc"
 fi
 
 _progress
@@ -194,13 +201,7 @@ echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_CO
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
 echo -e "Author: TechGeekZ"
 echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-echo -e "${GREEN_COLOR}────────────────────────────────────────────────────${RESET_COLOR}"
+echo -e "${GREEN_COLOR}──────────────────────────────────────────────────${RESET_COLOR}"
 echo
 echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
-echo
-echo -e "${GREEN_COLOR}Usage${RESET_COLOR}: Type '${GREEN_COLOR}debloat${RESET_COLOR}' from anywhere in Termux"
-echo
-echo -e "${GREEN_COLOR}Support${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-echo -e "${GREEN_COLOR}────────────────────────────────────────────────────${RESET_COLOR}"
-echo
-echo -e "use command: ${GREEN_COLOR}debloat${RESET_COLOR}"
+echo -e "use command~ ${GREEN_COLOR}debloat${RESET_COLOR}"
