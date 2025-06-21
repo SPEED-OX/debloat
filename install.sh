@@ -12,9 +12,10 @@ YELLOW_COLOR='\033[93m'
 CYAN_COLOR='\033[96m'
 RESET_COLOR='\033[0m'
 TELEGRAM_COLOR='\033[38;2;37;150;190m'  # Hex #2596be
+LIGHT_BLUE_COLOR='\033[38;5;117m'
 
 # Configuration
-GITHUB_REPO="https://raw.githubusercontent.com/YourUsername/universal-android-debloater/main"
+GITHUB_REPO="https://github.com/SPEED-OX/debloate"
 INSTALL_DIR="$HOME/android-debloater"
 DEBLOATER_USERS="$PREFIX/bin/.debloaterusersok"
 
@@ -25,11 +26,11 @@ if [ ! -d "/data/data/com.termux" ]; then
     exit 1
 fi
 
-# User tracking (similar to original script)
+# User tracking and initial upgrade
 if [ ! -f "$DEBLOATER_USERS" ]; then
-    echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
-    apt upgrade > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
-    curl -Is https://github.com/YourUsername/universal-android-debloater/releases/download/tracking/totalusers > /dev/null 2>&1
+    echo -ne "\r${GREEN_COLOR}pkg upgrade${RESET_COLOR} ..."
+    pkg upgrade -y > /dev/null 2>&1
+    curl -Is https://github.com/SPEED-OX/debloate/releases/download/tracking/totalusers > /dev/null 2>&1
     touch "$DEBLOATER_USERS"
 fi
 
@@ -63,12 +64,12 @@ elif [ $exit_code -eq 35 ]; then
     exit 35
 fi
 
-echo -ne "\r${GREEN_COLOR}apt update${RESET_COLOR} ..."
-apt update > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
+echo -ne "\r${GREEN_COLOR}pkg update${RESET_COLOR} ..."
+pkg update -y > /dev/null 2>&1
 
-# Progress tracking system (from original script)
+# Progress tracking system
 charit=1
-total=12
+total=6
 start_time=$(date +%s)
 
 _progress() {
@@ -85,63 +86,53 @@ _progress() {
 
 _progress
 
-# Essential packages for debloater
+# Essential packages for debloater (only python and android-tools)
 packages=(
     "python"
     "android-tools"
-    "curl"
-    "wget"
-    "git"
 )
 
 # Install/update packages
 for package in "${packages[@]}"; do
-    installed=$(apt policy "$package" 2>/dev/null | grep 'Installed' | awk '{print $2}')
-    candidate=$(apt policy "$package" 2>/dev/null | grep 'Candidate' | awk '{print $2}')
-    
-    if [ "$installed" != "$candidate" ]; then
-        apt download "$package" >/dev/null 2>&1
-        dpkg --force-overwrite -i "${package}"*.deb >/dev/null 2>&1
-        rm -f "${package}"*.deb
+    installed=$(pkg list-installed 2>/dev/null | grep "^$package/" | cut -d'/' -f1)
+    if [ -z "$installed" ]; then
+        pkg install "$package" -y >/dev/null 2>&1
     fi
-    
     _progress
 done
 
-# Create installation directory
-mkdir -p "$INSTALL_DIR"
-mkdir -p "$INSTALL_DIR/lists"
+# Download and extract repository as zip
+echo -ne "\r${GREEN_COLOR}Downloading repository${RESET_COLOR} ..."
+cd /tmp
+curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloater.zip
 
-# Download main debloater script
-curl -s "$GITHUB_REPO/debloater.py" -o "$INSTALL_DIR/debloater.py"
-chmod +x "$INSTALL_DIR/debloater.py"
+# Extract zip file
+if command -v unzip >/dev/null 2>&1; then
+    unzip -q debloater.zip
+else
+    # Install unzip if not available
+    pkg install unzip -y >/dev/null 2>&1
+    unzip -q debloater.zip
+fi
 
 _progress
 
-# Download bloatware lists
-brand_lists=(
-    "xiaomi.txt"
-    "samsung.txt"
-    "oneplus.txt"
-    "realme.txt"
-    "oppo.txt"
-    "vivo.txt"
-    "huawei.txt"
-    "honor.txt"
-    "motorola.txt"
-    "nokia.txt"
-    "lg.txt"
-    "sony.txt"
-    "asus.txt"
-    "lenovo.txt"
-    "google.txt"
-    "nothing.txt"
-    "common.txt"
-)
+# Create installation directory and copy files
+mkdir -p "$INSTALL_DIR"
 
-for list_file in "${brand_lists[@]}"; do
-    curl -s "$GITHUB_REPO/lists/$list_file" -o "$INSTALL_DIR/lists/$list_file" 2>/dev/null
-done
+# Copy main script
+if [ -f "/tmp/debloate-main/debloater.py" ]; then
+    cp "/tmp/debloate-main/debloater.py" "$INSTALL_DIR/"
+    chmod +x "$INSTALL_DIR/debloater.py"
+fi
+
+# Copy lists directory
+if [ -d "/tmp/debloate-main/lists" ]; then
+    cp -r "/tmp/debloate-main/lists" "$INSTALL_DIR/"
+fi
+
+# Clean up temporary files
+rm -rf /tmp/debloater.zip /tmp/debloate-main
 
 _progress
 
@@ -150,8 +141,6 @@ cat > "$PREFIX/bin/debloater" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
 
 # Universal Android Bloatware Remover Wrapper
-# This script allows running debloater from anywhere in Termux
-
 DEBLOATER_DIR="$HOME/android-debloater"
 DEBLOATER_SCRIPT="$DEBLOATER_DIR/debloater.py"
 
@@ -193,68 +182,25 @@ chmod +x "$PREFIX/bin/debloater"
 _progress
 
 # Create alias in .bashrc for persistent access
-if ! grep -q "alias debloater=" "$HOME/.bashrc" 2>/dev/null; then
-    echo "alias debloater='$PREFIX/bin/debloater'" >> "$HOME/.bashrc"
+if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
+    echo "alias debloat='$PREFIX/bin/debloater'" >> "$HOME/.bashrc"
 fi
 
 _progress
 
-# Verify installation
+# Print installation summary with exact styling from the image
 echo
-
-# Print installation summary with debloater.py styling
-echo -e "\n${GREEN_COLOR}** Universal Android Bloatware Remover **${RESET_COLOR}"
+echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
 echo -e "Author: TechGeekZ"
 echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-echo -e "${GREEN_COLOR}${'─' * 50}${RESET_COLOR}"
-
-# Installation verification
-if [ -f "$INSTALL_DIR/debloater.py" ]; then
-    echo -e "${GREEN_COLOR}✓${RESET_COLOR} Main script installed successfully"
-else
-    echo -e "${RED_COLOR}✗${RESET_COLOR} Main script installation failed"
-fi
-
-if [ -d "$INSTALL_DIR/lists" ]; then
-    list_count=$(find "$INSTALL_DIR/lists" -name "*.txt" 2>/dev/null | wc -l)
-    echo -e "${GREEN_COLOR}✓${RESET_COLOR} Bloatware lists installed ($list_count files)"
-else
-    echo -e "${RED_COLOR}✗${RESET_COLOR} Bloatware lists installation failed"
-fi
-
-if [ -x "$PREFIX/bin/debloater" ]; then
-    echo -e "${GREEN_COLOR}✓${RESET_COLOR} Command shortcut created"
-else
-    echo -e "${RED_COLOR}✗${RESET_COLOR} Command shortcut creation failed"
-fi
-
-if command -v python >/dev/null 2>&1; then
-    echo -e "${GREEN_COLOR}✓${RESET_COLOR} Python is available"
-else
-    echo -e "${RED_COLOR}✗${RESET_COLOR} Python installation failed"
-fi
-
-if command -v adb >/dev/null 2>&1; then
-    echo -e "${GREEN_COLOR}✓${RESET_COLOR} ADB is available"
-else
-    echo -e "${RED_COLOR}✗${RESET_COLOR} ADB installation failed"
-fi
-
-echo -e "${GREEN_COLOR}${'─' * 50}${RESET_COLOR}"
-
-# Usage instructions
-echo -e "\n${GREEN_COLOR}** Usage Instructions **${RESET_COLOR}"
-echo -e "${GREEN_COLOR}1.${RESET_COLOR} Connect your Android device via USB"
-echo -e "${GREEN_COLOR}2.${RESET_COLOR} Enable USB Debugging on your device"
-echo -e "${GREEN_COLOR}3.${RESET_COLOR} Run: ${YELLOW_COLOR}debloater${RESET_COLOR}"
-echo -e "\n${GREEN_COLOR}** Additional Commands **${RESET_COLOR}"
-echo -e "${GREEN_COLOR}•${RESET_COLOR} Check connected devices: ${YELLOW_COLOR}adb devices${RESET_COLOR}"
-echo -e "${GREEN_COLOR}•${RESET_COLOR} Manual execution: ${YELLOW_COLOR}cd $INSTALL_DIR && python debloater.py${RESET_COLOR}"
-echo -e "${GREEN_COLOR}•${RESET_COLOR} Reinstall: ${YELLOW_COLOR}curl -fsSL [installer-url] | bash${RESET_COLOR}"
-
-echo -e "\n${GREEN_COLOR}** Installation Complete! **${RESET_COLOR}"
-echo -e "Installation directory: ${CYAN_COLOR}$INSTALL_DIR${RESET_COLOR}"
-echo -e "Support: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-
-printf "\n${GREEN_COLOR}Use command: ${YELLOW_COLOR}debloater${RESET_COLOR}\n\n"
+echo -e "${GREEN_COLOR}────────────────────────────────────────────────────${RESET_COLOR}"
+echo
+echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
+echo
+echo -e "${GREEN_COLOR}Usage${RESET_COLOR}: Type '${GREEN_COLOR}debloat${RESET_COLOR}' from anywhere in Termux"
+echo
+echo -e "${GREEN_COLOR}Support${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
+echo -e "${GREEN_COLOR}────────────────────────────────────────────────────${RESET_COLOR}"
+echo
+echo -e "use command: ${GREEN_COLOR}debloat${RESET_COLOR}"
