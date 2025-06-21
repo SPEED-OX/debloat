@@ -4,48 +4,21 @@
 # Author: TechGeekZ
 # Telegram: https://t.me/TechGeekZ_chat
 
-echo
+# ANSI color codes matching exact display
+GREEN_COLOR='\033[92m'
+RESET_COLOR='\033[0m'
+RED_COLOR='\033[91m'
 
-if [ ! -d "/data/data/com.termux.api" ]; then
-    echo -e "\ncom.termux.api app is not installed\nPlease install it first\n"
-    exit 1
-fi
+# Repository configuration
+GITHUB_REPO="https://raw.githubusercontent.com/SPEED-OX/debloate"
+REPO_ZIP="https://github.com/SPEED-OX/debloate/archive/refs/heads/main.zip"
 
-echo -ne "\rurl check ..."
-
-main_repo=$(grep -E '^deb ' /data/data/com.termux/files/usr/etc/apt/sources.list | awk '{print $2}' | head -n 1)
-
-curl -s --retry 4 $main_repo > /dev/null
-exit_code=$?
-
-if [ $exit_code -eq 6 ]; then
-    echo -e "\nRequest to $main_repo failed. Please check your internet connection.\n"
-    exit 6
-elif [ $exit_code -eq 35 ]; then
-    echo -e "\nThe $main_repo is blocked in your current country.\n"
-    exit 35
-fi
-
-git_repo="https://raw.githubusercontent.com"
-
-curl -s --retry 4 $git_repo > /dev/null
-exit_code=$?
-
-if [ $exit_code -eq 6 ]; then
-    echo -e "\nRequest to $git_repo failed. Please check your internet connection.\n"
-    exit 6
-elif [ $exit_code -eq 35 ]; then
-    echo -e "\nThe $git_repo is blocked in your current country.\n"
-    exit 35
-fi
-
-echo -ne "\rapt update ..."
-apt update > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
-
-charit=1
+# Progress tracking variables
+charit=0
 total=12
 start_time=$(date +%s)
 
+# Progress display function - prints only once per step
 _progress() {
     charit=$((charit + 1))
     percentage=$((charit * 100 / total))
@@ -54,71 +27,96 @@ _progress() {
         end_time=$(date +%s)
         elapsed_time=$((end_time - start_time))
         echo -ne "\rProgress: $charit/$total ($percentage%) Took: $elapsed_time seconds"
-    else
-        echo -ne "\rProgress: $charit/$total ($percentage%)"
+        echo
     fi
 }
 
+# Network connectivity check
+echo -ne "\rurl check ..."
+curl -s --retry 4 $GITHUB_REPO > /dev/null
+exit_code=$?
+
+if [ $exit_code -eq 6 ]; then
+    echo -e "\nRequest to $GITHUB_REPO failed. Please check your internet connection.\n"
+    exit 6
+elif [ $exit_code -eq 35 ]; then
+    echo -e "\nThe $GITHUB_REPO is blocked in your current country.\n"
+    exit 35
+fi
+
+echo -ne "\rapt update ..."
+apt update > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
 _progress
 
-packages=(
-    "python3"
-    "android-tools"
-)
-
-for package in "${packages[@]}"; do
-    installed=$(apt policy "$package" 2>/dev/null | grep 'Installed' | awk '{print $2}')
-    candidate=$(apt policy "$package" 2>/dev/null | grep 'Candidate' | awk '{print $2}')
-    
-    if [ "$installed" != "$candidate" ]; then
-        apt download "$package" >/dev/null 2>&1
-        dpkg --force-overwrite -i "${package}"*.deb >/dev/null 2>&1
-        rm -f "${package}"*.deb
-    fi
-    
-    _progress
-done
-
-libs=(
-    "requests"
-    "colorama"
-)
-
-for lib in "${libs[@]}"; do
-    installed_version=$(pip show "$lib" 2>/dev/null | grep Version | awk '{print $2}')
-    latest_version=$(pip index versions "$lib" 2>/dev/null | grep 'LATEST:' | awk '{print $2}')
-    
-    if [ -z "$installed_version" ]; then
-        pip install "$lib" -q
-    elif [ "$installed_version" != "$latest_version" ]; then
-        pip install --upgrade "$lib" -q
-    fi
-    
-    _progress
-done
-
-curl -s "https://raw.githubusercontent.com/SPEED-OX/debloate/main/debloater.py" -o "$PREFIX/bin/debloater" && chmod +x "$PREFIX/bin/debloater"
-
+echo -ne "\rapt upgrade ..."
+apt upgrade -y > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
 _progress
 
-# Create lists directory
+echo -ne "\rinstalling python3 ..."
+pkg install python3 -y > /dev/null 2>&1
+_progress
+
+echo -ne "\rinstalling android-tools ..."
+pkg install android-tools -y > /dev/null 2>&1
+_progress
+
+echo -ne "\rdownloading repository ..."
+curl -L -s "$REPO_ZIP" -o /tmp/debloate-main.zip
+_progress
+
+echo -ne "\rextracting files ..."
+cd /tmp && unzip -q debloate-main.zip
+_progress
+
+echo -ne "\rinstalling debloater ..."
+cp debloate-main/debloater.py "$PREFIX/bin/debloater"
+chmod +x "$PREFIX/bin/debloater"
+_progress
+
+echo -ne "\rinstalling lists ..."
 mkdir -p "$PREFIX/bin/lists"
+cp -r debloate-main/lists/* "$PREFIX/bin/lists/" 2>/dev/null || true
+_progress
 
-# Download bloatware lists
-brands=("xiaomi" "samsung" "oneplus" "realme" "vivo" "oppo" "huawei" "common")
-
-for brand in "${brands[@]}"; do
-    curl -s "https://raw.githubusercontent.com/SPEED-OX/debloate/main/lists/${brand}.txt" -o "$PREFIX/bin/lists/${brand}.txt" 2>/dev/null
-    _progress
-done
-
+echo -ne "\rcreating alias ..."
 # Create proper alias in .bashrc
-echo 'alias debloat="python3 $PREFIX/bin/debloater"' >> ~/.bashrc
+if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
+    echo 'alias debloat="python3 $PREFIX/bin/debloater"' >> "$HOME/.bashrc"
+fi
+# Automatically source .bashrc to activate alias immediately
+source "$HOME/.bashrc" 2>/dev/null || true
+# Also create the alias in current session
+alias debloat="python3 $PREFIX/bin/debloater"
+_progress
 
+echo -ne "\rcleaning up ..."
+rm -rf /tmp/debloate-main /tmp/debloate-main.zip
+_progress
+
+echo -ne "\rvalidating installation ..."
+if [ -x "$PREFIX/bin/debloater" ]; then
+    _progress
+else
+    echo -e "\n${RED_COLOR}Installation failed${RESET_COLOR}"
+    exit 1
+fi
+
+echo -ne "\rfinalizing setup ..."
 _progress
 
 echo
-
-curl -L -s https://raw.githubusercontent.com/SPEED-OX/debloate/main/CHANGELOG.md | tac | awk '/^#/{exit} {print "\033[0;34m" $0 "\033[0m"}' | tac
-
-printf "\nuse command: \e[1;32mdebloat\e[0m\n\n"
+echo
+echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
+echo -e "${GREEN_COLOR}Version: 1.0${RESET_COLOR}"
+echo "Author: TechGeekZ"
+echo "Telegram: https://t.me/TechGeekZ_chat"
+echo "$(printf '─%.0s' {1..50})"
+echo
+echo
+echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
+echo
+echo -e "${GREEN_COLOR}Usage:${RESET_COLOR} Type '${GREEN_COLOR}debloat${RESET_COLOR}' from anywhere in Termux"
+echo
+echo "$(printf '─%.0s' {1..50})"
+echo
+printf "use command: \e[1;32mdebloat\e[0m\n\n"
