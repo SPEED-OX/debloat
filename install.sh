@@ -1,351 +1,293 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Universal Android Debloater - Termux Installation Script
-# Author: TechGeekZ
-# Description: Automated installation script for setting up the debloater in Termux
-# Support: https://t.me/TechGeekZ_chat
+""" Universal Android Debloater - Installation Script
+This script automatically installs the Universal Android Debloater in Termux
+with all necessary dependencies and configurations.
 
-# Color definitions for enhanced user experience
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
-NC='\033[0m' # No Color
-BOLD='\033[1m'
+For support, visit: https://t.me/TechGeekZ_chat
+"""
+
+# ANSI color codes matching debloater.py
+RESET_COLOR='\033[0m'
+GREEN_COLOR='\033[92m'
+RED_COLOR='\033[91m'
+LIGHT_BLUE_COLOR='\033[38;5;117m'
+TELEGRAM_COLOR='\033[38;2;37;150;190m'
 
 # Configuration variables
 GITHUB_REPO="https://github.com/YourUsername/android-debloater"
 INSTALL_DIR="$HOME/android-debloater"
 SCRIPT_NAME="debloater.py"
 LISTS_DIR="lists"
+SUPPORT_GROUP_URL="https://t.me/TechGeekZ_chat"
 
-# Function to print colored headers
-print_header() {
-    echo -e "\n${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${WHITE}${BOLD}          Universal Android Debloater - Installer            ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}║${WHITE}                    Version 1.0                              ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}║${PURPLE}                  Author: TechGeekZ                          ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}║${BLUE}            Telegram: https://t.me/TechGeekZ_chat            ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
-}
-
-# Function to print status messages
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-# Function to print error messages
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Function to print warning messages
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Function to update and upgrade Termux packages
-update_termux() {
-    print_status "Updating Termux package repositories..."
-    
-    # Update package lists without confirmation
-    if pkg update -y >/dev/null 2>&1; then
-        print_success "Package repositories updated successfully"
-    else
-        print_error "Failed to update package repositories"
+check_termux_environment() {
+    """ Checks if the script is running in Termux environment.
+    Returns True if in Termux, False otherwise.
+    """
+    if [ ! -d "/data/data/com.termux" ]; then
+        echo -e "**Checking Termux Environment: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}This installer requires Termux environment${RESET_COLOR}"
+        echo "[Error] Please run this script in Termux."
         return 1
     fi
     
-    print_status "Upgrading installed packages..."
+    echo -e "**Checking Termux Environment: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+    return 0
+}
+
+update_termux_packages() {
+    """ Updates Termux package repositories without user confirmation.
+    Returns 0 if successful, 1 if failed.
+    """
+    echo -e "\n**Updating Package Repositories..."
     
-    # Upgrade packages without confirmation
-    if pkg upgrade -y >/dev/null 2>&1; then
-        print_success "Packages upgraded successfully"
+    if pkg update -y &>/dev/null; then
+        echo -e "**Package Update Status: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+        return 0
     else
-        print_warning "Some packages may not have been upgraded properly"
+        echo -e "**Package Update Status: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}Failed to update package repositories${RESET_COLOR}"
+        echo "[Error] Please check your internet connection."
+        return 1
     fi
 }
 
-# Function to install required packages
-install_dependencies() {
-    print_status "Installing required dependencies..."
+install_essential_packages() {
+    """ Installs only the essential packages: python and android-tools.
+    Returns 0 if all packages installed successfully, 1 otherwise.
+    """
+    echo -e "\n**Installing Essential Packages..."
     
-    local packages=("python" "android-tools" "git" "wget" "curl")
+    local packages=("python" "android-tools")
     local failed_packages=()
     
     for package in "${packages[@]}"; do
-        print_status "Installing $package..."
+        echo -e "**Installing ${package}..."
         
-        if pkg install -y "$package" >/dev/null 2>&1; then
-            print_success "$package installed successfully"
+        if pkg install -y "$package" &>/dev/null; then
+            echo -e "**${package} Installation: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
         else
-            print_error "Failed to install $package"
+            echo -e "**${package} Installation: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
             failed_packages+=("$package")
         fi
     done
     
-    # Check if any packages failed to install
     if [ ${#failed_packages[@]} -gt 0 ]; then
-        print_error "The following packages failed to install: ${failed_packages[*]}"
-        print_error "Please install them manually using: pkg install ${failed_packages[*]}"
+        echo -e "${RED_COLOR}Failed to install: ${failed_packages[*]}${RESET_COLOR}"
+        echo "[Error] Please install manually: pkg install ${failed_packages[*]}"
+        echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
         return 1
     fi
     
-    print_success "All dependencies installed successfully"
+    echo -e "**Essential Packages Installation: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+    return 0
 }
 
-# Function to verify ADB installation
-verify_adb() {
-    print_status "Verifying ADB installation..."
+verify_installations() {
+    """ Verifies that Python and ADB are properly installed and accessible.
+    Returns 0 if verification successful, 1 otherwise.
+    """
+    echo -e "\n**Verifying Installations..."
     
-    if command_exists adb; then
-        local adb_version=$(adb version 2>/dev/null | head -n1)
-        print_success "ADB is properly installed: $adb_version"
-        return 0
-    else
-        print_error "ADB installation verification failed"
-        return 1
-    fi
-}
-
-# Function to verify Python installation
-verify_python() {
-    print_status "Verifying Python installation..."
-    
-    if command_exists python3; then
+    # Check Python installation
+    if command -v python3 &>/dev/null; then
         local python_version=$(python3 --version 2>/dev/null)
-        print_success "Python is properly installed: $python_version"
-        return 0
-    elif command_exists python; then
+        echo -e "**Python Verification: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR} ($python_version)"
+    elif command -v python &>/dev/null; then
         local python_version=$(python --version 2>/dev/null)
-        print_success "Python is properly installed: $python_version"
-        return 0
+        echo -e "**Python Verification: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR} ($python_version)"
     else
-        print_error "Python installation verification failed"
+        echo -e "**Python Verification: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}Python is not available${RESET_COLOR}"
         return 1
     fi
+    
+    # Check ADB installation
+    if command -v adb &>/dev/null; then
+        local adb_version=$(adb version 2>/dev/null | head -n1)
+        echo -e "**ADB Verification: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR} ($adb_version)"
+    else
+        echo -e "**ADB Verification: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}ADB is not available${RESET_COLOR}"
+        return 1
+    fi
+    
+    return 0
 }
 
-# Function to clone or download the debloater repository
-download_debloater() {
-    print_status "Downloading Universal Android Debloater..."
+download_debloater_files() {
+    """ Downloads the debloater script and related files from GitHub.
+    Returns 0 if successful, 1 otherwise.
+    """
+    echo -e "\n**Downloading Debloater Files..."
     
     # Remove existing installation if present
     if [ -d "$INSTALL_DIR" ]; then
-        print_warning "Existing installation found. Removing..."
+        echo -e "${GREEN_COLOR}Removing existing installation...${RESET_COLOR}"
         rm -rf "$INSTALL_DIR"
     fi
     
-    # Try to clone with git first
-    if command_exists git; then
-        print_status "Cloning repository using Git..."
-        if git clone "$GITHUB_REPO" "$INSTALL_DIR" >/dev/null 2>&1; then
-            print_success "Repository cloned successfully"
-            return 0
-        else
-            print_warning "Git clone failed, trying alternative download method..."
-        fi
-    fi
-    
-    # Alternative download method using wget or curl
-    print_status "Downloading repository archive..."
+    # Create installation directory
     mkdir -p "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR/$LISTS_DIR"
     
-    local archive_url="${GITHUB_REPO}/archive/main.zip"
-    local temp_file="/tmp/debloater.zip"
+    # Download main script
+    local script_url="${GITHUB_REPO}/raw/main/${SCRIPT_NAME}"
     
-    # Try wget first, then curl
-    if command_exists wget; then
-        if wget -q "$archive_url" -O "$temp_file"; then
-            print_status "Extracting archive..."
-            if unzip -q "$temp_file" -d "/tmp/" && mv "/tmp/android-debloater-main/"* "$INSTALL_DIR/"; then
-                rm -f "$temp_file"
-                rm -rf "/tmp/android-debloater-main"
-                print_success "Repository downloaded and extracted successfully"
-                return 0
-            fi
+    if command -v curl &>/dev/null; then
+        if curl -sL "$script_url" -o "$INSTALL_DIR/$SCRIPT_NAME"; then
+            echo -e "**Debloater Script Download: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+        else
+            echo -e "**Debloater Script Download: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+            echo -e "${RED_COLOR}Failed to download debloater script${RESET_COLOR}"
+            return 1
         fi
-    elif command_exists curl; then
-        if curl -sL "$archive_url" -o "$temp_file"; then
-            print_status "Extracting archive..."
-            if unzip -q "$temp_file" -d "/tmp/" && mv "/tmp/android-debloater-main/"* "$INSTALL_DIR/"; then
-                rm -f "$temp_file"
-                rm -rf "/tmp/android-debloater-main"
-                print_success "Repository downloaded and extracted successfully"
-                return 0
-            fi
-        fi
-    fi
-    
-    print_error "Failed to download the debloater repository"
-    return 1
-}
-
-# Function to set up file permissions
-setup_permissions() {
-    print_status "Setting up file permissions..."
-    
-    # Make the main script executable
-    if [ -f "$INSTALL_DIR/$SCRIPT_NAME" ]; then
-        chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
-        print_success "Made $SCRIPT_NAME executable"
     else
-        print_error "$SCRIPT_NAME not found in installation directory"
+        echo -e "**Download Tool Check: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}curl is not available${RESET_COLOR}"
         return 1
     fi
     
-    # Set appropriate permissions for the lists directory
-    if [ -d "$INSTALL_DIR/$LISTS_DIR" ]; then
-        chmod -R 644 "$INSTALL_DIR/$LISTS_DIR"/*.txt 2>/dev/null
-        print_success "Set appropriate permissions for bloatware lists"
-    else
-        print_warning "Lists directory not found, creating it..."
-        mkdir -p "$INSTALL_DIR/$LISTS_DIR"
-    fi
+    # Download bloatware lists (example for common brands)
+    local lists=("xiaomi.txt" "samsung.txt" "oneplus.txt" "common.txt")
+    
+    for list_file in "${lists[@]}"; do
+        local list_url="${GITHUB_REPO}/raw/main/lists/${list_file}"
+        
+        if curl -sL "$list_url" -o "$INSTALL_DIR/$LISTS_DIR/$list_file" 2>/dev/null; then
+            echo -e "**${list_file} Download: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+        else
+            echo -e "**${list_file} Download: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        fi
+    done
+    
+    return 0
 }
 
-# Function to create the 'debloat' launcher script
-create_launcher() {
-    print_status "Creating 'debloat' launcher script..."
+setup_debloater() {
+    """ Sets up file permissions and creates the launcher script.
+    Returns 0 if successful, 1 otherwise.
+    """
+    echo -e "\n**Setting Up Debloater..."
     
-    local launcher_path="$PREFIX/bin/debloat"
+    # Make main script executable
+    if [ -f "$INSTALL_DIR/$SCRIPT_NAME" ]; then
+        chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+        echo -e "**Script Permissions: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+    else
+        echo -e "**Script Permissions: ${RED_COLOR}UNSUCCESSFUL${RESET_COLOR}"
+        echo -e "${RED_COLOR}Main script not found${RESET_COLOR}"
+        return 1
+    fi
     
-    cat > "$launcher_path" << 'EOF'
+    # Create launcher script
+    cat > "$PREFIX/bin/debloat" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
-# Universal Android Debloater Launcher Script
+# Universal Android Debloater Launcher
 
 DEBLOATER_DIR="$HOME/android-debloater"
 SCRIPT_PATH="$DEBLOATER_DIR/debloater.py"
 
 if [ ! -f "$SCRIPT_PATH" ]; then
-    echo -e "\033[0;31m[ERROR]\033[0m Debloater not found at $SCRIPT_PATH"
-    echo "Please run the installer again or check the installation."
+    echo -e "\033[91m[ERROR]\033[0m Debloater not found"
+    echo "Please reinstall using the installation script."
     exit 1
 fi
 
 cd "$DEBLOATER_DIR"
 
-# Check if python3 is available, fallback to python
-if command -v python3 >/dev/null 2>&1; then
+if command -v python3 &>/dev/null; then
     python3 "$SCRIPT_PATH" "$@"
-elif command -v python >/dev/null 2>&1; then
+elif command -v python &>/dev/null; then
     python "$SCRIPT_PATH" "$@"
 else
-    echo -e "\033[0;31m[ERROR]\033[0m Python is not installed or not in PATH"
+    echo -e "\033[91m[ERROR]\033[0m Python not available"
     exit 1
 fi
 EOF
     
-    chmod +x "$launcher_path"
-    print_success "Launcher script created: ${GREEN}debloat${NC}"
-    print_status "You can now run the debloater from anywhere using: ${GREEN}debloat${NC}"
+    chmod +x "$PREFIX/bin/debloat"
+    echo -e "**Launcher Creation: ${GREEN_COLOR}SUCCESSFUL${RESET_COLOR}"
+    
+    return 0
 }
 
-# Function to display usage instructions
-show_usage_instructions() {
-    echo -e "\n${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${WHITE}${BOLD}                    Installation Complete!                   ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
+show_installation_complete() {
+    """ Displays the installation completion message with usage instructions.
+    """
+    echo -e "\n${GREEN_COLOR}╔══════════════════════════════════════════════════════════════╗${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}║${RESET_COLOR}                                                              ${GREEN_COLOR}║${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}║${RESET_COLOR}              Installation Complete Successfully!             ${GREEN_COLOR}║${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}║${RESET_COLOR}                                                              ${GREEN_COLOR}║${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}╚══════════════════════════════════════════════════════════════╝${RESET_COLOR}"
     
-    echo -e "${GREEN}${BOLD}Quick Start:${NC}"
-    echo -e "${WHITE}1.${NC} Connect your Android device via USB"
-    echo -e "${WHITE}2.${NC} Enable USB Debugging on your device"
-    echo -e "${WHITE}3.${NC} Simply type: ${GREEN}${BOLD}debloat${NC}"
+    echo -e "\n**Usage Instructions:"
+    echo -e "${GREEN_COLOR}1. ${RESET_COLOR}Connect your Android device via USB"
+    echo -e "${GREEN_COLOR}2. ${RESET_COLOR}Enable USB debugging on your device"
+    echo -e "${GREEN_COLOR}3. ${RESET_COLOR}Run: ${GREEN_COLOR}debloat${RESET_COLOR}"
     
-    echo -e "\n${BLUE}${BOLD}Alternative Usage:${NC}"
-    echo -e "${WHITE}•${NC} Direct execution: ${GREEN}cd $INSTALL_DIR && python3 $SCRIPT_NAME${NC}"
+    echo -e "\n**Installation Details:"
+    echo -e "${GREEN_COLOR}~ Installation Directory:${RESET_COLOR} $INSTALL_DIR"
+    echo -e "${GREEN_COLOR}~ Command:${RESET_COLOR} ${GREEN_COLOR}debloat${RESET_COLOR} (available from anywhere)"
     
-    echo -e "\n${BLUE}${BOLD}Important Notes:${NC}"
-    echo -e "${WHITE}•${NC} Make sure to authorize ADB connection on your device"
-    echo -e "${WHITE}•${NC} Always backup your device before removing system apps"
-    echo -e "${WHITE}•${NC} Some apps may require a device reboot to take effect"
+    echo -e "\n**Support Information:"
+    echo -e "${GREEN_COLOR}~ Telegram:${RESET_COLOR} ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}~ Version:${RESET_COLOR} ${GREEN_COLOR}1.0${RESET_COLOR}"
     
-    echo -e "\n${PURPLE}${BOLD}Support:${NC}"
-    echo -e "${WHITE}•${NC} Telegram: ${CYAN}https://t.me/TechGeekZ_chat${NC}"
-    echo -e "${WHITE}•${NC} Installation Directory: ${YELLOW}$INSTALL_DIR${NC}"
-    
-    echo -e "\n${GREEN}${BOLD}Happy Debloating! 🚀${NC}\n"
+    echo -e "\n${GREEN_COLOR}Happy Debloating! 🚀${RESET_COLOR}\n"
 }
 
-# Function to perform cleanup on failure
 cleanup_on_failure() {
-    print_warning "Cleaning up due to installation failure..."
+    """ Performs cleanup when installation fails.
+    """
+    echo -e "\n${RED_COLOR}Performing cleanup...${RESET_COLOR}"
     [ -d "$INSTALL_DIR" ] && rm -rf "$INSTALL_DIR"
     [ -f "$PREFIX/bin/debloat" ] && rm -f "$PREFIX/bin/debloat"
 }
 
-# Main installation function
 main() {
-    # Clear screen and show header
-    clear
-    print_header
+    echo -e "\n** Universal Android Debloater - Installer **"
+    echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
+    echo -e "Author: TechGeekZ"
+    echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+    echo -e "─────────────────────────────────────────────────────────────"
     
-    # Check if running in Termux
-    if [ ! -d "/data/data/com.termux" ]; then
-        print_error "This script is designed to run in Termux environment only!"
+    # Trap for cleanup on failure
+    trap 'echo -e "\n${RED_COLOR}Installation interrupted${RESET_COLOR}"; cleanup_on_failure; exit 1' INT TERM
+    
+    # Installation steps following debloater.py structure
+    if ! check_termux_environment; then
         exit 1
     fi
     
-    print_status "Starting Universal Android Debloater installation..."
-    
-    # Step 1: Update Termux
-    if ! update_termux; then
-        print_error "Failed to update Termux packages"
+    if ! update_termux_packages; then
         exit 1
     fi
     
-    # Step 2: Install dependencies
-    if ! install_dependencies; then
-        print_error "Failed to install required dependencies"
-        exit 1
-    fi
-    
-    # Step 3: Verify installations
-    if ! verify_adb || ! verify_python; then
-        print_error "Dependency verification failed"
-        exit 1
-    fi
-    
-    # Step 4: Download debloater
-    if ! download_debloater; then
-        print_error "Failed to download debloater"
+    if ! install_essential_packages; then
         cleanup_on_failure
         exit 1
     fi
     
-    # Step 5: Setup permissions
-    if ! setup_permissions; then
-        print_error "Failed to setup file permissions"
+    if ! verify_installations; then
         cleanup_on_failure
         exit 1
     fi
     
-    # Step 6: Create launcher
-    if ! create_launcher; then
-        print_error "Failed to create launcher script"
+    if ! download_debloater_files; then
         cleanup_on_failure
         exit 1
     fi
     
-    # Step 7: Show completion message
-    show_usage_instructions
+    if ! setup_debloater; then
+        cleanup_on_failure
+        exit 1
+    fi
+    
+    show_installation_complete
 }
 
-# Trap to handle script interruption
-trap 'echo -e "\n${RED}Installation interrupted by user${NC}"; cleanup_on_failure; exit 1' INT TERM
-
-# Run main function
-main "$@"
+if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
+    main "$@"
+fi
