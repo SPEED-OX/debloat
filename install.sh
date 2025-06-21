@@ -1,238 +1,275 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 
-# Function to print messages
-function print_message() {
-    echo -e "\n\033[1;34m$1\033[0m"
+# Universal Android Bloatware Remover - Termux Installation Script
+# This script automatically sets up the debloater tool in Termux environment
+
+# Color codes for output formatting
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
+TELEGRAM_COLOR='\033[38;2;37;150;190m'
+
+# Repository configuration
+REPO_URL="https://raw.githubusercontent.com/SPEED-OX/debloate/main"
+INSTALL_DIR="$HOME/debloater"
+LISTS_DIR="$INSTALL_DIR/lists"
+
+# Support information
+SUPPORT_URL="https://t.me/TechGeekZ_chat"
+
+echo -e "\n${CYAN}** Universal Android Bloatware Remover - Termux Setup **${RESET}"
+echo -e "${GREEN}Author: TechGeekZ${RESET}"
+echo -e "${TELEGRAM_COLOR}Telegram: $SUPPORT_URL${RESET}"
+echo -e "$(printf '─%.0s' {1..60})"
+
+# Function to print status messages
+print_status() {
+    echo -e "\n${BLUE}[INFO]${RESET} $1"
 }
 
-# Update and upgrade packages
-print_message "Updating and upgrading packages..."
-pkg update && pkg upgrade -y
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${RESET} $1"
+}
 
-# Install Python and Android tools
-print_message "Installing Python and Android tools..."
-pkg install python android-tools -y
+print_error() {
+    echo -e "${RED}[ERROR]${RESET} $1"
+}
 
-# Create the main debloater directory
-print_message "Creating the debloater directory structure..."
-mkdir -p ~/debloater/lists
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${RESET} $1"
+}
 
-# Create the debloater.py file
-cat <<EOF > ~/debloater/debloater.py
-#!/usr/bin/env python3
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-\"\"\"
-Universal Android Bloatware Remover
------------------------------------
-This script detects the connected Android device's brand and uses the corresponding
-bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
-\"\"\"
+# Function to download file with error handling
+download_file() {
+    local url="$1"
+    local output="$2"
+    local description="$3"
+    
+    print_status "Downloading $description..."
+    if curl -fsSL "$url" -o "$output"; then
+        print_success "$description downloaded successfully"
+        return 0
+    else
+        print_error "Failed to download $description from $url"
+        return 1
+    fi
+}
 
-import os
-import re
-import subprocess
-import sys
+# Update and upgrade Termux packages
+print_status "Updating Termux package lists..."
+if apt update -y >/dev/null 2>&1; then
+    print_success "Package lists updated"
+else
+    print_warning "Package update had some issues, continuing..."
+fi
 
-SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"  # Replace with your actual support link
+print_status "Upgrading Termux packages..."
+if apt upgrade -y >/dev/null 2>&1; then
+    print_success "Packages upgraded"
+else
+    print_warning "Package upgrade had some issues, continuing..."
+fi
 
-def get_device_brand():
-    \"\"\"
-    Attempts to detect the Android device brand using adb.
-    Returns the brand as a lowercase string, or None if detection fails.
-    \"\"\"
-    try:
-        result = subprocess.run(
-            ['adb', 'shell', 'getprop', 'ro.product.brand'],
-            capture_output=True, text=True, timeout=5
-        )
-        if result.returncode != 0:
-            print(f"[Error] adb returned code {result.returncode}: {result.stderr.strip()}")
-            return None
-        brand = result.stdout.strip().lower()
-        if not brand:
-            print("[Error] Device brand could not be determined (empty result from adb).")
-            return None
-        print(f"[Info] Detected device brand: {brand}")
-        return brand
-    except Exception as e:
-        print(f"[Exception] Brand detection failed: {e}")
-        return None
+# Install required packages
+print_status "Installing required packages..."
 
-def find_brand_file(lists_dir, brand):
-    \"\"\"
-    Looks for a bloatware list file corresponding to the given brand.
-    Returns the full path if found, otherwise None.
-    \"\"\"
-    files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
-    if not files:
-        print("[Error] No bloatware lists found in the lists/ directory.")
-        sys.exit(1)
-    if not brand:
-        return None
-    for f in files:
-        if f.startswith(brand):
-            print(f"[Info] Using list: {f} for brand: {brand}")
-            return os.path.join(lists_dir, f)
-    print(f"[Notice] No list found for detected brand '{brand}'.")
-    print(f"This brand is currently unsupported or pending update.\n"
-          f"For assistance or to request support, visit: {SUPPORT_GROUP_URL}\n")
-    return None
+# Install android-tools (includes adb)
+if ! command_exists adb; then
+    print_status "Installing android-tools..."
+    if apt install -y android-tools >/dev/null 2>&1; then
+        print_success "android-tools installed"
+    else
+        print_error "Failed to install android-tools"
+        exit 1
+    fi
+else
+    print_success "android-tools already installed"
+fi
 
-def manual_brand_file_selection(lists_dir):
-    \"\"\"
-    Allows the user to manually select a bloatware list file.
-    Returns the full path to the selected file.
-    \"\"\"
-    files = [f for f in os.listdir(lists_dir) if f.endswith('.txt')]
-    print("Available bloatware lists:")
-    for idx, f in enumerate(files):
-        print(f"{idx+1}. {f.replace('.txt','')}")
-    while True:
-        try:
-            idx = int(input("Select a brand by number: ").strip()) - 1
-            if 0 <= idx < len(files):
-                return os.path.join(lists_dir, files[idx])
-            else:
-                print("Invalid selection. Please enter a valid number.")
-        except Exception:
-            print("Invalid input. Please enter a number corresponding to the list.")
+# Install Python3
+if ! command_exists python3; then
+    print_status "Installing Python3..."
+    if apt install -y python3 >/dev/null 2>&1; then
+        print_success "Python3 installed"
+    else
+        print_error "Failed to install Python3"
+        exit 1
+    fi
+else
+    print_success "Python3 already installed"
+fi
 
-def parse_bloatware_file(filepath):
-    \"\"\"
-    Parses the specified bloatware list file, extracting tuples of (app_name, package_name).
-    \"\"\"
-    apps = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            match = re.match(r'(.+?)(?:\s+pm\s+\w+[\w\s\-–—]+)?\s+([a-zA-Z0-9_. ]+)$', line)
-            if match:
-                app, package = match.group(1), match.group(2)
-                apps.append((app.strip(), package.strip()))
-                continue
-            arrow_match = re.match(r'(.+?)\s*[➡️]\s*([a-zA-Z0-9_. ]+)$', line)
-            if arrow_match:
-                app, package = arrow_match.group(1), arrow_match.group(2)
-                apps.append((app.strip(), package.strip()))
-                continue
-            package_only = re.match(r'^([a-zA-Z0-9_.]+)(? :\s*-\s*.+)?$', line)
-            if package_only:
-                package = package_only.group(1)
-                app = package
-                apps.append((app.strip(), package.strip()))
-    return apps
+# Install curl if not present
+if ! command_exists curl; then
+    print_status "Installing curl..."
+    if apt install -y curl >/dev/null 2>&1; then
+        print_success "curl installed"
+    else
+        print_error "Failed to install curl"
+        exit 1
+    fi
+else
+    print_success "curl already installed"
+fi
 
-def choose_app_and_action(apps):
-    \"\"\"
-    Presents the list of apps and prompts the user to select one or all,
-    then choose the desired action.
-    Returns a tuple (indices, action).
-    \"\"\"
-    print("\nAvailable applications:")
-    for idx, (app, package) in enumerate(apps):
-        print(f"{idx+1}. {app} ({package})")
-    print("0. [Batch] Select ALL applications")
-    while True:
-        selected = input("Enter application number (or 0 for all): ").strip()
-        if selected == '0':
-            indices = list(range(len(apps)))
-            break
-        try:
-            idx = int(selected) - 1
-            if 0 <= idx < len(apps):
-                indices = [idx]
-                break
-            else:
-                print("Invalid selection. Please enter a valid number.")
-        except Exception:
-            print("Invalid input. Please enter a numeric value.")
-    print("\nChoose an action:")
-    print("1. Uninstall (keep data)")
-    print("2. Uninstall (full)")
-    print("3. Reinstall")
-    print("4. Disable")
-    print("5. Enable")
-    while True:
-        action = input("Enter action number: ").strip()
-        if action in {'1', '2', '3', '4', '5'}:
-            return indices, int(action)
-        else:
-            print("Invalid input. Please enter a number between 1 and 5.")
+# Create installation directory
+print_status "Creating installation directory..."
+if mkdir -p "$INSTALL_DIR" "$LISTS_DIR"; then
+    print_success "Installation directories created"
+else
+    print_error "Failed to create installation directories"
+    exit 1
+fi
 
-def run_adb_command(package, action):
-    \"\"\"
-    Executes the appropriate adb command for the selected action and package.
-    Outputs the result or error.
-    \"\"\"
-    if action == 1:
-        cmd = f'adb shell pm uninstall -k --user 0 {package}'
-    elif action == 2:
-        cmd = f'adb shell pm uninstall --user 0 {package}'
-    elif action == 3:
-        cmd = f'adb shell cmd package install-existing {package}'
-    elif action == 4:
-        cmd = f'adb shell pm disable-user --user 0 {package}'
-    elif action == 5:
-        cmd = f'adb shell pm enable {package}'
-    else:
-        print("[Error] Unknown action.")
-        return
-    print(f"[Executing] {cmd}")
-    try:
-        result = subprocess.run(cmd.split(), capture_output=True, text=True)
-        output = result.stdout.strip() or result.stderr.strip()
-        print(output)
-        if result.returncode != 0:
-            print(f"[Error] adb returned code {result.returncode}.")
-            print(f"For troubleshooting or assistance, visit: {SUPPORT_GROUP_URL}")
-    except Exception as e:
-        print(f"[Exception] Command execution failed: {e}")
-        print(f"For troubleshooting or assistance, visit: {SUPPORT_GROUP_URL}")
+# Download main script
+if ! download_file "$REPO_URL/debloater.py" "$INSTALL_DIR/debloater.py" "main debloater script"; then
+    exit 1
+fi
 
-def main():
-    print("\nUniversal Android Bloatware Remover\n"
-          "-----------------------------------")
-    lists_dir = os.path.join(os.path.dirname(__file__), 'lists')
-    brand = get_device_brand()
-    file_path = find_brand_file(lists_dir, brand)
-    if not file_path:
-        print("Proceeding to manual selection of bloatware list...\n")
-        file_path = manual_brand_file_selection(lists_dir)
-    apps = parse_bloatware_file(file_path)
-    if not apps:
-        print("[Error] No applications parsed from the list. Please verify the format of your bloatware list file.")
-        print(f"For support, visit: {SUPPORT_GROUP_URL}")
-        sys.exit(1)
-    indices, action = choose_app_and_action(apps)
-    for idx in indices:
-        app, package = apps[idx]
-        print(f"\n[Processing] {app} ({package})")
-        run_adb_command(package, action)
+# Make the script executable
+print_status "Setting executable permissions..."
+if chmod +x "$INSTALL_DIR/debloater.py"; then
+    print_success "Script permissions set"
+else
+    print_error "Failed to set script permissions"
+    exit 1
+fi
 
-if __name__ == '__main__':
-    main()
+# Download bloatware lists
+print_status "Downloading bloatware lists..."
+
+# List of known brand files to download
+BRAND_FILES=(
+    "common.txt"
+    "xiaomi.txt"
+    "samsung.txt"
+    "oneplus.txt"
+    "realme.txt"
+    "oppo.txt"
+    "vivo.txt"
+    "huawei.txt"
+    "honor.txt"
+    "motorola.txt"
+    "nokia.txt"
+    "lg.txt"
+    "sony.txt"
+    "htc.txt"
+    "asus.txt"
+    "lenovo.txt"
+    "meizu.txt"
+    "tcl.txt"
+    "alcatel.txt"
+    "google.txt"
+    "nothing.txt"
+    "fairphone.txt"
+)
+
+# Download each brand file (continue even if some fail)
+downloaded_count=0
+for brand_file in "${BRAND_FILES[@]}"; do
+    if download_file "$REPO_URL/lists/$brand_file" "$LISTS_DIR/$brand_file" "$brand_file"; then
+        ((downloaded_count++))
+    else
+        print_warning "Could not download $brand_file (may not exist in repository)"
+    fi
+done
+
+print_success "Downloaded $downloaded_count bloatware list files"
+
+# Create alias in .bashrc
+print_status "Setting up 'debloat' command alias..."
+
+# Remove existing alias if present
+if [ -f "$HOME/.bashrc" ]; then
+    sed -i '/alias debloat=/d' "$HOME/.bashrc"
+fi
+
+# Add new alias
+echo "alias debloat='python3 $INSTALL_DIR/debloater.py'" >> "$HOME/.bashrc"
+
+# Also create a direct executable script for immediate use
+cat > "$HOME/../usr/bin/debloat" << EOF
+#!/bin/bash
+python3 "$INSTALL_DIR/debloater.py" "\$@"
 EOF
 
-# Make the debloater.py file executable
-chmod +x ~/debloater/debloater.py
+chmod +x "$HOME/../usr/bin/debloat"
 
-# Create sample bloatware list files
-cat <<EOF > ~/debloater/lists/realme.txt
-# Sample bloatware list for Realme
-AppName pm uninstall ... com.realme.bloatware
-AnotherApp pm uninstall ... com.realme.anotherbloat
+print_success "Command alias 'debloat' created"
+
+# Verify ADB installation
+print_status "Verifying ADB installation..."
+if command_exists adb; then
+    ADB_VERSION=$(adb version 2>/dev/null | head -n1)
+    print_success "ADB is ready: $ADB_VERSION"
+else
+    print_error "ADB installation verification failed"
+    exit 1
+fi
+
+# Create usage instructions
+cat > "$INSTALL_DIR/README.md" << EOF
+# Universal Android Bloatware Remover
+
+## Usage Instructions
+
+### Quick Start
+1. Enable USB Debugging on your Android device
+2. Connect your device via USB
+3. Run the command: \`debloat\`
+
+### Commands
+- \`debloat\` - Run the bloatware remover
+- \`adb devices\` - Check connected devices
+
+### Requirements
+- Android device with USB Debugging enabled
+- USB connection to Termux device
+- Authorized ADB connection
+
+### Support
+For support or feature requests, visit: $SUPPORT_URL
+
+### File Locations
+- Main script: $INSTALL_DIR/debloater.py
+- Bloatware lists: $LISTS_DIR/
+- This guide: $INSTALL_DIR/README.md
 EOF
 
-cat <<EOF > ~/debloater/lists/xiaomi.txt
-# Sample bloatware list for Xiaomi
-AppName pm uninstall ... com.xiaomi.bloatware
-AnotherApp ➡️ com.xiaomi.anotherbloat
-EOF
+# Final setup completion
+echo -e "\n$(printf '─%.0s' {1..60})"
+print_success "Installation completed successfully!"
+echo -e "\n${GREEN}Setup Summary:${RESET}"
+echo -e "  ${CYAN}•${RESET} Android tools (ADB) installed"
+echo -e "  ${CYAN}•${RESET} Python3 environment ready"
+echo -e "  ${CYAN}•${RESET} Debloater script downloaded"
+echo -e "  ${CYAN}•${RESET} Bloatware lists updated"
+echo -e "  ${CYAN}•${RESET} Command alias 'debloat' created"
 
-print_message "Installation complete! Your directory structure is ready."
+echo -e "\n${YELLOW}Next Steps:${RESET}"
+echo -e "  ${CYAN}1.${RESET} Enable USB Debugging on your Android device"
+echo -e "  ${CYAN}2.${RESET} Connect your device via USB"
+echo -e "  ${CYAN}3.${RESET} Restart Termux or run: ${GREEN}source ~/.bashrc${RESET}"
+echo -e "  ${CYAN}4.${RESET} Run the command: ${GREEN}debloat${RESET}"
 
-# Inform the user how to run the script
-print_message "To run your debloater.py script, execute:"
-echo "python ~/debloater/debloater.py"
+echo -e "\n${BLUE}Additional Commands:${RESET}"
+echo -e "  ${GREEN}adb devices${RESET}     - Check connected devices"
+echo -e "  ${GREEN}debloat${RESET}         - Run the bloatware remover"
+
+echo -e "\n${TELEGRAM_COLOR}For support, visit: $SUPPORT_URL${RESET}"
+echo -e "$(printf '─%.0s' {1..60})"
+
+# Source bashrc to make alias available immediately (if running interactively)
+if [[ $- == *i* ]]; then
+    source "$HOME/.bashrc" 2>/dev/null || true
+fi
+
+print_success "You can now use the 'debloat' command!"
