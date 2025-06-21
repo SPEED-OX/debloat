@@ -17,13 +17,18 @@ REPO_URL="https://github.com/SPEED-OX/debloate"
 DEST_DIR="$HOME/debloater"
 SUPPORT_GROUP_URL="https://t.me/TechGeekZ_chat"
 
+# Function to create separator line
+create_separator() {
+    printf "%0.s─" {1..50}
+}
+
 # Function to print colored messages
 print_header() {
     echo -e "\n${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
     echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
     echo -e "Author: TechGeekZ"
     echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}${'─' * 50}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}$(create_separator)${RESET_COLOR}"
 }
 
 print_status() {
@@ -152,12 +157,6 @@ create_alias() {
         fi
     done
     
-    # Source the current shell configuration to make alias available immediately
-    if [ -f "$HOME/.bashrc" ]; then
-        # shellcheck source=/dev/null
-        source "$HOME/.bashrc" 2>/dev/null || true
-    fi
-    
     print_success
 }
 
@@ -208,16 +207,20 @@ verify_installation() {
 
 # Function to display final instructions
 show_completion_message() {
-    echo -e "\n${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
+    local separator_line
+    separator_line=$(printf "%0.s─" {1..60})
+    
+    echo -e "\n${GREEN_COLOR}${separator_line}${RESET_COLOR}"
     echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}${separator_line}${RESET_COLOR}"
     echo -e "\n${GREEN_COLOR}Usage Options:${RESET_COLOR}"
     echo -e "${GREEN_COLOR}1.${RESET_COLOR} Type ${GREEN_COLOR}'debloat'${RESET_COLOR} from anywhere in Termux"
     echo -e "${GREEN_COLOR}2.${RESET_COLOR} Or run ${GREEN_COLOR}'python3 $DEST_DIR/debloater.py'${RESET_COLOR}"
     echo -e "\n${GREEN_COLOR}Note:${RESET_COLOR} Make sure to enable USB debugging on your Android device"
     echo -e "and connect it via USB before running the debloater."
     echo -e "\n${GREEN_COLOR}Support:${RESET_COLOR} ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}${separator_line}${RESET_COLOR}"
+    echo -e "\n${GREEN_COLOR}Restarting shell to activate 'debloat' command...${RESET_COLOR}"
 }
 
 # Main installation function
@@ -254,8 +257,8 @@ main() {
         # Step 7: Show completion message
         show_completion_message
         
-        # Make alias available in current session
-        exec bash
+        # Make alias available in current session by restarting bash
+        exec bash -l
     else
         exit 1
     fi
