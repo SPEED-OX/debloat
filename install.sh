@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # install.sh - Universal Android Bloatware Remover Setup Script
 # Author: TechGeekZ
@@ -16,109 +16,130 @@ REPO_URL="https://github.com/SPEED-OX/debloate"
 DEST_DIR="$HOME/debloater"
 SUPPORT_GROUP_URL="https://t.me/TechGeekZ_chat"
 
-# Function to create separator line
-create_separator() {
-    printf "%0.s─" {1..50}
-}
+echo
 
-# Function to print colored messages
-print_header() {
-    echo -e "\n${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
-    echo -e "Author: TechGeekZ"
-    echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}$(create_separator)${RESET_COLOR}"
-}
+if [ ! -d "$HOME/storage" ]; then
+    echo -e "\nGrant permission: termux-setup-storage\nThen rerun the command.\n"
+    exit 1
+fi
 
-print_status() {
-    echo -e "\n${GREEN_COLOR}~ $1${RESET_COLOR}"
-}
+arch=$(dpkg --print-architecture)
+if [[ "$arch" != "aarch64" && "$arch" != "arm" ]]; then
+    echo "Debloater does not support architecture $arch"
+    exit 1
+fi
 
-print_success() {
-    echo -e "\n${GREEN_COLOR}SUCCESS ! ! ${RESET_COLOR}"
-}
+debloaterusers="$PREFIX/bin/.debloaterusersok"
 
-print_error() {
-    echo -e "\n${RED_COLOR}[ERROR]${RESET_COLOR} $1"
-}
+if [ ! -f "$debloaterusers" ]; then
+    echo -ne "\rapt upgrade ..."
+    apt upgrade > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
+    curl -Is https://github.com/SPEED-OX/debloate/releases > /dev/null 2>&1
+    touch "$debloaterusers"
+fi
 
-# Function to update and install packages
-setup_packages() {
-    print_status "Updating package list..."
-    apt update -y >/dev/null 2>&1
-    
-    print_status "Installing python3..."
-    apt install -y python3 >/dev/null 2>&1
-    
-    print_status "Installing android-tools..."
-    apt install -y android-tools >/dev/null 2>&1
-    
-    print_success
-}
+echo -ne "\rurl check ..."
 
-# Function to clone repository
-setup_repository() {
-    print_status "Downloading debloater from GitHub..."
-    
-    if [ -d "$DEST_DIR" ]; then
-        rm -rf "$DEST_DIR"
+main_repo=$(grep -E '^deb ' /data/data/com.termux/files/usr/etc/apt/sources.list | awk '{print $2}' | head -n 1)
+
+curl -s --retry 4 $main_repo > /dev/null
+exit_code=$?
+
+if [ $exit_code -eq 6 ]; then
+    echo -e "\nRequest to $main_repo failed. Please check your internet connection.\n"
+    exit 6
+elif [ $exit_code -eq 35 ]; then
+    echo -e "\nThe $main_repo is blocked in your current country.\n"
+    exit 35
+fi
+
+git_repo="https://raw.githubusercontent.com"
+
+curl -s --retry 4 $git_repo > /dev/null
+exit_code=$?
+
+if [ $exit_code -eq 6 ]; then
+    echo -e "\nRequest to $git_repo failed. Please check your internet connection.\n"
+    exit 6
+elif [ $exit_code -eq 35 ]; then
+    echo -e "\nThe $git_repo is blocked in your current country.\n"
+    exit 35
+fi
+
+echo -ne "\rapt update ..."
+apt update > /dev/null 2> >(grep -v "apt does not have a stable CLI interface")
+
+charit=1
+total=5
+start_time=$(date +%s)
+
+_progress() {
+    charit=$((charit + 1))
+    percentage=$((charit * 100 / total))
+    echo -ne "\rProgress: $charit/$total ($percentage%)"
+    if [ $percentage -eq 100 ]; then
+        end_time=$(date +%s)
+        elapsed_time=$((end_time - start_time))
+        echo -ne "\rProgress: $charit/$total ($percentage%) Took: $elapsed_time seconds"
+    else
+        echo -ne "\rProgress: $charit/$total ($percentage%)"
     fi
-    
-    if ! git clone "$REPO_URL" "$DEST_DIR" >/dev/null 2>&1; then
-        # Fallback: use curl if git is not available
-        mkdir -p "$DEST_DIR"
-        if ! curl -sL "$REPO_URL/archive/main.zip" -o /tmp/debloater.zip; then
-            print_error "Failed to download repository"
-            exit 1
-        fi
-        unzip -q /tmp/debloater.zip -d /tmp/
-        cp -r /tmp/debloate-main/* "$DEST_DIR/"
-        rm -rf /tmp/debloater.zip /tmp/debloate-main
+}
+
+_progress
+
+packages=(
+    "python"
+    "android-tools"
+)
+
+for package in "${packages[@]}"; do
+    installed=$(apt policy "$package" 2>/dev/null | grep 'Installed' | awk '{print $2}')
+    candidate=$(apt policy "$package" 2>/dev/null | grep 'Candidate' | awk '{print $2}')
+    if [ "$installed" != "$candidate" ]; then
+        apt download "$package" >/dev/null 2>&1
+        dpkg --force-overwrite -i "${package}"*.deb >/dev/null 2>&1
+        rm -f "${package}"*.deb
     fi
-    
+    _progress
+done
+
+# Clone or download debloater repository
+if [ -d "$DEST_DIR" ]; then
+    rm -rf "$DEST_DIR"
+fi
+
+curl -s -L "$REPO_URL/archive/main.zip" -o /tmp/debloater.zip
+if [ $? -eq 0 ]; then
+    unzip -q /tmp/debloater.zip -d /tmp/
+    mkdir -p "$DEST_DIR"
+    cp -r /tmp/debloate-main/* "$DEST_DIR/"
+    rm -rf /tmp/debloater.zip /tmp/debloate-main
     chmod +x "$DEST_DIR/debloater.py"
-    print_success
-}
+fi
 
-# Function to create alias
-create_alias() {
-    print_status "Creating 'debloat' alias..."
-    
-    local alias_command="alias debloat='python3 $DEST_DIR/debloater.py'"
-    
-    if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
-        echo "" >> "$HOME/.bashrc"
-        echo "# Universal Android Bloatware Remover alias" >> "$HOME/.bashrc"
-        echo "$alias_command" >> "$HOME/.bashrc"
-    fi
-    
-    print_success
-}
+_progress
 
-# Function to display completion message
-show_completion_message() {
-    local separator_line
-    separator_line=$(printf "%0.s─" {1..60})
-    
-    echo -e "\n${GREEN_COLOR}${separator_line}${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}${separator_line}${RESET_COLOR}"
-    echo -e "\n${GREEN_COLOR}Usage:${RESET_COLOR} Type ${GREEN_COLOR}'debloat'${RESET_COLOR} from anywhere in Termux"
-    echo -e "\n${GREEN_COLOR}Support:${RESET_COLOR} ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
-    echo -e "${GREEN_COLOR}${separator_line}${RESET_COLOR}"
-}
+# Create alias
+alias_command="alias debloat='python3 $DEST_DIR/debloater.py'"
+if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
+    echo "" >> "$HOME/.bashrc"
+    echo "# Universal Android Bloatware Remover alias" >> "$HOME/.bashrc"
+    echo "$alias_command" >> "$HOME/.bashrc"
+fi
 
-# Main function
-main() {
-    clear
-    print_header
-    
-    setup_packages
-    setup_repository
-    create_alias
-    
-    show_completion_message
-    exec bash -l
-}
+_progress
 
-main "$@"
+echo
+
+echo -e "\n${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
+echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
+echo -e "Author: TechGeekZ"
+echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+echo -e "${GREEN_COLOR}$(printf "%0.s─" {1..50})${RESET_COLOR}"
+echo -e "\n${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
+echo -e "\n${GREEN_COLOR}Usage:${RESET_COLOR} Type ${GREEN_COLOR}'debloat'${RESET_COLOR} from anywhere in Termux"
+echo -e "\n${GREEN_COLOR}Support:${RESET_COLOR} ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+echo -e "${GREEN_COLOR}$(printf "%0.s─" {1..50})${RESET_COLOR}"
+
+printf "\nuse command: \e[1;32mdebloat\e[0m\n\n"
