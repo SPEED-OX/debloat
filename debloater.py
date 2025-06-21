@@ -1,0 +1,432 @@
+#!/usr/bin/env python3
+
+""" Universal Android Bloatware Remover ----------------------------------- This script detects the connected Android device's brand and uses the corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
+
+## For support, visit: https://t.me/TechGeekZ_chat
+
+"""
+
+import os
+import re
+import subprocess
+import sys
+
+SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"
+
+# ANSI color codes for different brands and UI elements
+BRAND_COLORS = {
+    'realme': '\033[93m',      # Yellow
+    'xiaomi': '\033[38;5;208m', # Orange
+    'poco': '\033[38;5;208m',   # Orange (same as Xiaomi)
+    'mi': '\033[38;5;208m',     # Orange (same as Xiaomi)
+    'oneplus': '\033[91m',      # Red
+    'vivo': '\033[94m',         # Blue
+    'oppo': '\033[92m',         # Green
+    'samsung': '\033[96m',      # Cyan
+    'huawei': '\033[95m',       # Magenta
+    'honor': '\033[97m',        # White
+    'motorola': '\033[90m',     # Dark Gray
+    'nokia': '\033[34m',        # Blue
+    'lg': '\033[35m',           # Purple
+    'sony': '\033[33m',         # Yellow
+    'htc': '\033[36m',          # Cyan
+    'asus': '\033[31m',         # Red
+    'lenovo': '\033[32m',       # Green
+    'meizu': '\033[37m',        # Light Gray
+    'tcl': '\033[38;5;166m',    # Orange
+    'alcatel': '\033[38;5;21m', # Blue
+    'blackberry': '\033[30m',   # Black
+    'google': '\033[38;5;214m', # Orange
+    'nothing': '\033[97m',      # White
+    'fairphone': '\033[92m',    # Green
+}
+
+# UI Colors
+RESET_COLOR = '\033[0m'
+GREEN_COLOR = '\033[92m'
+RED_COLOR = '\033[91m'
+LIGHT_BLUE_COLOR = '\033[38;5;117m'  # Light blue for telegram link
+TELEGRAM_COLOR = '\033[38;2;37;150;190m'  # Hex #2596be
+
+# Brand mapping for sub-brands that should use parent brand's bloatware list
+BRAND_MAPPING = {
+    'poco': 'xiaomi',
+    'mi': 'xiaomi',
+}
+
+def check_adb_connection():
+    """
+    Checks if ADB is available and if any device is connected.
+    Returns True if connected, False otherwise.
+    """
+    # Check if adb is available
+    try:
+        result = subprocess.run(['adb', 'version'], capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+            print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
+            print("[Error] ADB is not installed or not in PATH.")
+            return False
+    except Exception as e:
+        print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+        print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
+        print(f"[Error] ADB is not available: {e}")
+        return False
+
+    # Check device connection
+    try:
+        result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+            print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
+            print("[Error] Failed to check device connection.")
+            return False
+
+        devices = result.stdout.strip().split('\n')[1:]  # Skip header line
+        connected_devices = [line for line in devices if line.strip() and 'device' in line]
+
+        if not connected_devices:
+            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+            print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
+            print("[Status] No devices connected via ADB.")
+            print("Please ensure:")
+            print("- USB debugging is enabled on your device")
+            print("- Device is connected via USB")
+            print("- You have authorized the ADB connection on your device")
+            return False
+
+        print(f"**Checking ADB Connection Status: {GREEN_COLOR}SUCCESSFUL{RESET_COLOR}")
+        return True
+
+    except Exception as e:
+        print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+        print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
+        print(f"[Error] Failed to check device connection: {e}")
+        return False
+
+def get_device_brand():
+    """
+    Attempts to detect the Android device brand using adb.
+    Returns the brand as a lowercase string, or None if detection fails.
+    """
+    try:
+        result = subprocess.run(
+            ['adb', 'shell', 'getprop', 'ro.product.brand'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode != 0:
+            print(f"[Error] adb returned code {result.returncode}: {result.stderr.strip()}")
+            return None
+
+        brand = result.stdout.strip().lower()
+        if not brand:
+            print("[Error] Device brand could not be determined (empty result from adb).")
+            return None
+
+        return brand
+
+    except Exception as e:
+        print(f"[Exception] Brand detection failed: {e}")
+        return None
+
+def print_colored_brand(brand):
+    """
+    Prints the device brand in its corresponding brand color.
+    """
+    print()  # Add newline before
+    if brand in BRAND_COLORS:
+        color = BRAND_COLORS[brand]
+        print(f"\n{GREEN_COLOR}~ Device Brand:{RESET_COLOR} {color}{brand.upper()}{RESET_COLOR}")
+    else:
+        print(f"\n{GREEN_COLOR}~ Device Brand:{RESET_COLOR} {brand.upper()}")
+    print()  # Add newline after
+
+def get_mapped_brand(brand):
+    """
+    Returns the mapped brand for bloatware list lookup.
+    For example, 'poco' and 'mi' will return 'xiaomi'.
+    """
+    return BRAND_MAPPING.get(brand, brand)
+
+def check_brand_list_availability(lists_dir, brand):
+    """
+    Checks if a bloatware list file exists for the given brand.
+    Uses brand mapping to find the correct list file.
+    Returns the full path if found, otherwise None.
+    """
+    if not brand:
+        return None
+
+    # Get the mapped brand for file lookup
+    mapped_brand = get_mapped_brand(brand)
+    brand_file = f"{mapped_brand}.txt"
+    file_path = os.path.join(lists_dir, brand_file)
+
+    if os.path.exists(file_path):
+        return file_path
+    else:
+        return None
+
+def get_installed_packages():
+    """
+    Gets all installed packages on the connected device.
+    Returns a set of package names.
+    """
+    try:
+        result = subprocess.run(
+            ['adb', 'shell', 'pm', 'list', 'packages'],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode != 0:
+            print(f"[Error] Failed to get installed packages: {result.stderr.strip()}")
+            return set()
+
+        packages = set()
+        for line in result.stdout.strip().split('\n'):
+            if line.startswith('package:'):
+                package_name = line.replace('package:', '').strip()
+                packages.add(package_name)
+
+        return packages
+
+    except Exception as e:
+        print(f"[Exception] Failed to get installed packages: {e}")
+        return set()
+
+def parse_bloatware_file(filepath):
+    """
+    Parses the specified bloatware list file, extracting tuples of (package_name, app_name).
+    Expected format: "com.package.name  ( App Name )" or "com.package.name"
+    """
+    apps = []
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+
+                # Format: "com.package.name  ( App Name )"
+                match = re.match(r'^([a-zA-Z0-9_.]+)\s*\(\s*(.+?)\s*\)$', line)
+                if match:
+                    package, app_name = match.group(1).strip(), match.group(2).strip()
+                    apps.append((package, app_name))
+                    continue
+
+                # Format: "com.package.name"
+                package_match = re.match(r'^([a-zA-Z0-9_.]+)$', line)
+                if package_match:
+                    package = package_match.group(1).strip()
+                    apps.append((package, package))  # Use package name as display name
+                    continue
+
+                print(f"[Warning] Skipping malformed line {line_num}: {line}")
+
+        return apps
+
+    except Exception as e:
+        print(f"[Error] Failed to parse bloatware file: {e}")
+        return []
+
+def display_matching_packages(apps, installed_packages):
+    """
+    Displays packages from the bloatware list that are actually installed on the device.
+    """
+    matching_apps = []
+
+    for package, app_name in apps:
+        if package in installed_packages:
+            matching_apps.append((package, app_name))
+
+    if not matching_apps:
+        print("[Info] No bloatware packages from the list are currently installed on this device.")
+        return []
+
+    print(f"\n**Found {GREEN_COLOR}{len(matching_apps)}{RESET_COLOR} bloatware packages installed**")
+    print(f"{GREEN_COLOR}{'─' * 50}{RESET_COLOR}")
+
+    for idx, (package, app_name) in enumerate(matching_apps, 1):
+        print(f"{GREEN_COLOR}{idx:2d}. {RESET_COLOR} {package} ({app_name})")
+
+    print(f"{GREEN_COLOR}{'─' * 50}{RESET_COLOR}")
+    print(f"{GREEN_COLOR}0. {RESET_COLOR} [Batch] To Select ALL applications")
+    print("─" * 50)
+
+    return matching_apps
+
+def choose_app_and_action(apps):
+    """
+    Presents the list of apps and prompts the user to select one or all, then choose the desired action.
+    Returns a tuple (indices, action).
+    """
+    while True:
+        selected = input(f"\n**Select package ({GREEN_COLOR}0{RESET_COLOR}~{GREEN_COLOR}{len(apps)}{RESET_COLOR}):").strip()
+        if selected == '0':
+            indices = list(range(len(apps)))
+            break
+
+        try:
+            idx = int(selected) - 1
+            if 0 <= idx < len(apps):
+                indices = [idx]
+                break
+            else:
+                print("Invalid selection. Please enter a valid number.")
+        except Exception:
+            print("Invalid input. Please enter a numeric value.")
+
+    print(f"\n**Choose Action ({GREEN_COLOR}1{RESET_COLOR}~{GREEN_COLOR}5{RESET_COLOR}):")
+    print(f"{GREEN_COLOR}1. {RESET_COLOR} Uninstall ({GREEN_COLOR}keep data for restore{RESET_COLOR})")
+    print(f"{GREEN_COLOR}2. {RESET_COLOR} Uninstall ({RED_COLOR}full wipe{RESET_COLOR})")
+    print(f"{GREEN_COLOR}3. {RESET_COLOR} Reinstall")
+    print(f"{GREEN_COLOR}4. {RESET_COLOR} Disable")
+    print(f"{GREEN_COLOR}5. {RESET_COLOR} Enable")
+
+    while True:
+        action = input(f"\n**Choice ({GREEN_COLOR}1{RESET_COLOR}~{GREEN_COLOR}5{RESET_COLOR}):").strip()
+        if action in {'1', '2', '3', '4', '5'}:
+            return indices, int(action)
+        else:
+            print("Invalid input. Please enter a number between 1 and 5.")
+
+def get_action_text(action):
+    """
+    Returns the appropriate action text for display.
+    """
+    actions = {
+        1: "uninstalling",
+        2: "complete uninstalling",
+        3: "reinstalling",
+        4: "disabling",
+        5: "enabling"
+    }
+    return actions.get(action, "processing")
+
+def run_adb_command(package, action):
+    """
+    Executes the appropriate adb command for the selected action and package.
+    Outputs the result or error.
+    """
+    if action == 1:
+        cmd = f'adb shell pm uninstall -k --user 0 {package}'
+    elif action == 2:
+        cmd = f'adb shell pm uninstall --user 0 {package}'
+    elif action == 3:
+        cmd = f'adb shell cmd package install-existing {package}'
+    elif action == 4:
+        cmd = f'adb shell pm disable-user --user 0 {package}'
+    elif action == 5:
+        cmd = f'adb shell pm enable {package}'
+    else:
+        print("[Error] Unknown action.")
+        return
+
+    try:
+        result = subprocess.run(cmd.split(), capture_output=True, text=True)
+        output = result.stdout.strip() or result.stderr.strip()
+
+        if result.returncode == 0 and ("Success" in output or "Installed" in output or "enabled" in output or "disabled" in output):
+            print(f"\n{GREEN_COLOR}SUCCESS !! {RESET_COLOR}")
+        else:
+            print(output)
+            if result.returncode != 0:
+                print(f"[Error] adb returned code {result.returncode}.")
+                print(f"For troubleshooting or assistance, visit: {SUPPORT_GROUP_URL}")
+
+    except Exception as e:
+        print(f"[Exception] Command execution failed: {e}")
+        print(f"For troubleshooting or assistance, visit: {SUPPORT_GROUP_URL}")
+
+def main():
+    print(f"\n** Universal Android Bloatware Remover **")
+    print(f"{GREEN_COLOR}Version{RESET_COLOR}: {GREEN_COLOR}1.0{RESET_COLOR}")
+    print(f"Author: TechGeekZ")
+    print(f"{TELEGRAM_COLOR}Telegram{RESET_COLOR}: {TELEGRAM_COLOR}https://t.me/TechGeekZ_chat{RESET_COLOR}")
+    print("─" * 50)
+
+    # Step 1: Check ADB connection
+    if not check_adb_connection():
+        sys.exit(1)
+
+    # Step 2: Get and display device brand
+    brand = get_device_brand()
+    if not brand:
+        print("[Error] Could not detect device brand. Exiting.")
+        sys.exit(1)
+
+    print_colored_brand(brand)
+
+    # Step 3: Check if brand list is available
+    lists_dir = os.path.join(os.path.dirname(__file__), 'lists')
+
+    if not os.path.exists(lists_dir):
+        print(f"[Error] Lists directory not found: {lists_dir}")
+        sys.exit(1)
+
+    # Check for brand-specific list
+    brand_file_path = check_brand_list_availability(lists_dir, brand)
+    
+    # Check for common list
+    common_file_path = os.path.join(lists_dir, 'common.txt')
+    common_exists = os.path.exists(common_file_path)
+
+    # If no brand-specific list exists, show error message
+    if not brand_file_path:
+        if common_exists:
+            print(f"{RED_COLOR}[ERROR]{RESET_COLOR} Listing only common bloatwares{RED_COLOR}!{RESET_COLOR}")
+            # Get brand color for error message
+            brand_color = BRAND_COLORS.get(brand, '')
+            print(f"{RED_COLOR}[ERROR]{RESET_COLOR} This Brand {brand_color}{brand.upper()}{RESET_COLOR} is not yet supported{RED_COLOR}!{RESET_COLOR}")
+            print(f"\nFor support or To request this brand,")
+            print(f"visit: {TELEGRAM_COLOR}{SUPPORT_GROUP_URL}{RESET_COLOR}")
+        else:
+            print(f"[Error] This device brand ({brand.upper()}) is not supported yet.")
+            print(f"For support or to request this brand, visit: {SUPPORT_GROUP_URL}")
+            sys.exit(1)
+
+    # Step 4: Get installed packages
+    installed_packages = get_installed_packages()
+
+    if not installed_packages:
+        print("[Error] Could not retrieve installed packages from device.")
+        sys.exit(1)
+
+    # Step 5: Parse bloatware lists
+    all_apps = []
+    
+    # Load brand-specific list if available
+    if brand_file_path:
+        brand_apps = parse_bloatware_file(brand_file_path)
+        all_apps.extend(brand_apps)
+    
+    # Always load common list if available
+    if common_exists:
+        common_apps = parse_bloatware_file(common_file_path)
+        all_apps.extend(common_apps)
+
+    if not all_apps:
+        print("[Error] No applications parsed from the list. Please verify the format of your bloatware list file.")
+        print(f"For support, visit: {SUPPORT_GROUP_URL}")
+        sys.exit(1)
+
+    # Step 6: Display matching packages
+    matching_apps = display_matching_packages(all_apps, installed_packages)
+
+    if not matching_apps:
+        print("\nYour device appears to be clean of the known bloatware packages!")
+        sys.exit(0)
+
+    # Step 7: Let user choose action
+    indices, action = choose_app_and_action(matching_apps)
+
+    # Step 8: Execute actions
+    action_text = get_action_text(action)
+
+    for idx in indices:
+        package, app_name = matching_apps[idx]
+        print(f"\n[{action_text}] {app_name} ({package})")
+        run_adb_command(package, action)
+
+if __name__ == '__main__':
+    main()
