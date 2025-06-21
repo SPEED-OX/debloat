@@ -217,11 +217,11 @@ setup_permissions() {
     fi
 }
 
-# Function to create a convenient launcher script
+# Function to create the 'debloat' launcher script
 create_launcher() {
-    print_status "Creating launcher script..."
+    print_status "Creating 'debloat' launcher script..."
     
-    local launcher_path="$PREFIX/bin/debloater"
+    local launcher_path="$PREFIX/bin/debloat"
     
     cat > "$launcher_path" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
@@ -250,8 +250,8 @@ fi
 EOF
     
     chmod +x "$launcher_path"
-    print_success "Launcher script created at $launcher_path"
-    print_status "You can now run the debloater from anywhere using: ${GREEN}debloater${NC}"
+    print_success "Launcher script created: ${GREEN}debloat${NC}"
+    print_status "You can now run the debloater from anywhere using: ${GREEN}debloat${NC}"
 }
 
 # Function to display usage instructions
@@ -260,12 +260,13 @@ show_usage_instructions() {
     echo -e "${CYAN}║${WHITE}${BOLD}                    Installation Complete!                   ${NC}${CYAN}║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
     
-    echo -e "${GREEN}${BOLD}Usage Instructions:${NC}"
+    echo -e "${GREEN}${BOLD}Quick Start:${NC}"
     echo -e "${WHITE}1.${NC} Connect your Android device via USB"
     echo -e "${WHITE}2.${NC} Enable USB Debugging on your device"
-    echo -e "${WHITE}3.${NC} Run the debloater using one of these methods:"
-    echo -e "   ${YELLOW}•${NC} ${GREEN}debloater${NC} (from anywhere)"
-    echo -e "   ${YELLOW}•${NC} ${GREEN}cd $INSTALL_DIR && python3 $SCRIPT_NAME${NC}"
+    echo -e "${WHITE}3.${NC} Simply type: ${GREEN}${BOLD}debloat${NC}"
+    
+    echo -e "\n${BLUE}${BOLD}Alternative Usage:${NC}"
+    echo -e "${WHITE}•${NC} Direct execution: ${GREEN}cd $INSTALL_DIR && python3 $SCRIPT_NAME${NC}"
     
     echo -e "\n${BLUE}${BOLD}Important Notes:${NC}"
     echo -e "${WHITE}•${NC} Make sure to authorize ADB connection on your device"
@@ -283,7 +284,7 @@ show_usage_instructions() {
 cleanup_on_failure() {
     print_warning "Cleaning up due to installation failure..."
     [ -d "$INSTALL_DIR" ] && rm -rf "$INSTALL_DIR"
-    [ -f "$PREFIX/bin/debloater" ] && rm -f "$PREFIX/bin/debloater"
+    [ -f "$PREFIX/bin/debloat" ] && rm -f "$PREFIX/bin/debloat"
 }
 
 # Main installation function
