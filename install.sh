@@ -1,214 +1,265 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 
-# Universal Android Debloater - Professional Installation Script
+# install.sh - Universal Android Bloatware Remover Setup Script
 # Author: TechGeekZ
-# Support: https://t.me/TechGeekZ_chat
+# Telegram: https://t.me/TechGeekZ_chat
+# Repository: https://github.com/SPEED-OX/debloate
 
-# Clean color scheme - Professional appearance
-HEADER='\033[1;36m'     # Bright Cyan for headers
-SUCCESS='\033[1;32m'    # Bright Green for success
-ERROR='\033[1;31m'      # Bright Red for errors
-INFO='\033[1;34m'       # Bright Blue for info
-WARNING='\033[1;33m'    # Bright Yellow for warnings
-RESET='\033[0m'         # Reset color
-BOLD='\033[1m'          # Bold text
+# ANSI color codes matching debloater.py design
+RESET_COLOR='\033[0m'
+GREEN_COLOR='\033[92m'
+RED_COLOR='\033[91m'
+LIGHT_BLUE_COLOR='\033[38;5;117m'
+TELEGRAM_COLOR='\033[38;2;37;150;190m'
 
-# Configuration
-GITHUB_REPO="https://github.com/YourUsername/android-debloater"
-INSTALL_DIR="$HOME/android-debloater"
-SCRIPT_NAME="debloater.py"
+# Repository configuration
+REPO_URL="https://github.com/SPEED-OX/debloate"
+DEST_DIR="$HOME/debloater"
+SUPPORT_GROUP_URL="https://t.me/TechGeekZ_chat"
 
-# Professional header with clean design
-show_header() {
-    clear
-    echo -e "${HEADER}${BOLD}"
-    echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│                                                         │"
-    echo "│         Universal Android Debloater v1.0               │"
-    echo "│                                                         │"
-    echo "│         Professional Installation Script                │"
-    echo "│                                                         │"
-    echo "│         Author: TechGeekZ                               │"
-    echo "│         Support: t.me/TechGeekZ_chat                    │"
-    echo "│                                                         │"
-    echo "└─────────────────────────────────────────────────────────┘"
-    echo -e "${RESET}\n"
+# Function to print colored messages
+print_header() {
+    echo -e "\n${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
+    echo -e "Author: TechGeekZ"
+    echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}${'─' * 50}${RESET_COLOR}"
 }
 
-# Clean status messages
-log_info() {
-    echo -e "${INFO}▶${RESET} $1"
+print_status() {
+    echo -e "\n${GREEN_COLOR}~ $1${RESET_COLOR}"
 }
 
-log_success() {
-    echo -e "${SUCCESS}✓${RESET} $1"
+print_success() {
+    echo -e "\n${GREEN_COLOR}SUCCESS ! ! ${RESET_COLOR}"
 }
 
-log_error() {
-    echo -e "${ERROR}✗${RESET} $1"
+print_error() {
+    echo -e "\n${RED_COLOR}[ERROR]${RESET_COLOR} $1"
 }
 
-log_warning() {
-    echo -e "${WARNING}⚠${RESET} $1"
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
 }
 
-# Check if running in Termux
-check_environment() {
-    if [ ! -d "/data/data/com.termux" ]; then
-        log_error "This installer requires Termux environment"
+# Function to update Termux packages automatically
+update_termux() {
+    print_status "Updating Termux package list..."
+    
+    # Set DEBIAN_FRONTEND to noninteractive to avoid prompts
+    export DEBIAN_FRONTEND=noninteractive
+    
+    # Update package list with automatic yes
+    if ! pkg update -y >/dev/null 2>&1; then
+        print_error "Failed to update package list"
+        echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
         exit 1
     fi
-}
-
-# Update package repositories
-update_packages() {
-    log_info "Updating package repositories..."
     
-    if pkg update -y &>/dev/null; then
-        log_success "Package repositories updated"
-    else
-        log_error "Failed to update repositories"
+    print_status "Upgrading installed packages..."
+    
+    # Upgrade packages with automatic yes and no prompts
+    if ! pkg upgrade -y >/dev/null 2>&1; then
+        print_error "Failed to upgrade packages"
+        echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
         exit 1
     fi
+    
+    print_success
 }
 
-# Install only essential packages
-install_essentials() {
-    log_info "Installing essential packages..."
-    
-    # Only install what's absolutely necessary
-    local packages=("python" "android-tools")
+# Function to install required packages
+install_packages() {
+    local packages=("git" "python" "android-tools")
     
     for package in "${packages[@]}"; do
-        log_info "Installing $package..."
-        
-        if pkg install -y "$package" &>/dev/null; then
-            log_success "$package installed"
+        if command_exists "$package" || command_exists "${package}3"; then
+            print_status "$package is already installed"
         else
-            log_error "Failed to install $package"
-            echo -e "${WARNING}Manual installation required:${RESET} pkg install $package"
-            exit 1
+            print_status "Installing $package..."
+            if ! pkg install -y "$package" >/dev/null 2>&1; then
+                print_error "Failed to install $package"
+                echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+                exit 1
+            fi
         fi
     done
+    
+    print_success
 }
 
-# Verify installations
-verify_tools() {
-    log_info "Verifying installations..."
-    
-    # Check Python
-    if command -v python3 &>/dev/null || command -v python &>/dev/null; then
-        log_success "Python verified"
-    else
-        log_error "Python installation failed"
-        exit 1
-    fi
-    
-    # Check ADB
-    if command -v adb &>/dev/null; then
-        log_success "ADB verified"
-    else
-        log_error "ADB installation failed"
-        exit 1
-    fi
-}
-
-# Download debloater (simplified)
-download_debloater() {
-    log_info "Downloading debloater..."
-    
-    # Remove existing installation
-    [ -d "$INSTALL_DIR" ] && rm -rf "$INSTALL_DIR"
-    
-    # Create installation directory
-    mkdir -p "$INSTALL_DIR"
-    
-    # Simple download approach - adjust URL as needed
-    local script_url="${GITHUB_REPO}/raw/main/debloater.py"
-    
-    if command -v curl &>/dev/null; then
-        if curl -sL "$script_url" -o "$INSTALL_DIR/$SCRIPT_NAME"; then
-            log_success "Debloater downloaded"
-        else
-            log_error "Download failed"
+# Function to clone or update repository
+setup_repository() {
+    if [ -d "$DEST_DIR" ]; then
+        print_status "Repository exists. Updating to latest version..."
+        cd "$DEST_DIR" || exit 1
+        
+        if ! git pull >/dev/null 2>&1; then
+            print_error "Failed to update repository"
+            echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
             exit 1
         fi
     else
-        log_error "Download tool not available"
+        print_status "Cloning repository from GitHub..."
+        
+        if ! git clone "$REPO_URL" "$DEST_DIR" >/dev/null 2>&1; then
+            print_error "Failed to clone repository"
+            echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+            exit 1
+        fi
+        
+        cd "$DEST_DIR" || exit 1
+    fi
+    
+    print_success
+}
+
+# Function to set up executable permissions
+setup_permissions() {
+    print_status "Setting up executable permissions..."
+    
+    if [ -f "$DEST_DIR/debloater.py" ]; then
+        chmod +x "$DEST_DIR/debloater.py"
+        print_success
+    else
+        print_error "debloater.py not found in repository"
+        echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
         exit 1
     fi
 }
 
-# Set up permissions and create launcher
-setup_launcher() {
-    log_info "Setting up launcher..."
+# Function to create alias
+create_alias() {
+    print_status "Creating 'debloat' alias for easy execution..."
     
-    # Make script executable
-    chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+    local alias_command="alias debloat='python3 $DEST_DIR/debloater.py'"
+    local shell_configs=("$HOME/.bashrc" "$HOME/.zshrc")
     
-    # Create simple launcher
-    cat > "$PREFIX/bin/debloat" << EOF
-#!/data/data/com.termux/files/usr/bin/bash
-cd "$INSTALL_DIR"
-if command -v python3 &>/dev/null; then
-    python3 "$SCRIPT_NAME" "\$@"
-else
-    python "$SCRIPT_NAME" "\$@"
-fi
-EOF
+    for config_file in "${shell_configs[@]}"; do
+        if [ -f "$config_file" ] || [ "$config_file" = "$HOME/.bashrc" ]; then
+            # Create .bashrc if it doesn't exist
+            if [ ! -f "$config_file" ]; then
+                touch "$config_file"
+            fi
+            
+            # Check if alias already exists
+            if ! grep -q "alias debloat=" "$config_file" 2>/dev/null; then
+                echo "" >> "$config_file"
+                echo "# Universal Android Bloatware Remover alias" >> "$config_file"
+                echo "$alias_command" >> "$config_file"
+            fi
+        fi
+    done
     
-    chmod +x "$PREFIX/bin/debloat"
-    log_success "Launcher created"
+    # Source the current shell configuration to make alias available immediately
+    if [ -f "$HOME/.bashrc" ]; then
+        # shellcheck source=/dev/null
+        source "$HOME/.bashrc" 2>/dev/null || true
+    fi
+    
+    print_success
 }
 
-# Show completion message
-show_completion() {
-    echo -e "\n${HEADER}${BOLD}"
-    echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│                                                         │"
-    echo "│              Installation Complete!                     │"
-    echo "│                                                         │"
-    echo "└─────────────────────────────────────────────────────────┘"
-    echo -e "${RESET}\n"
+# Function to verify installation
+verify_installation() {
+    print_status "Verifying installation..."
     
-    echo -e "${SUCCESS}${BOLD}Usage:${RESET}"
-    echo -e "  ${INFO}debloat${RESET}  - Run from anywhere"
-    echo -e "\n${INFO}${BOLD}Setup:${RESET}"
-    echo -e "  1. Connect Android device via USB"
-    echo -e "  2. Enable USB Debugging"
-    echo -e "  3. Run: ${SUCCESS}debloat${RESET}"
+    local checks_passed=0
+    local total_checks=4
     
-    echo -e "\n${WARNING}${BOLD}Support:${RESET} t.me/TechGeekZ_chat"
-    echo ""
+    # Check if python3 is available
+    if command_exists python3; then
+        ((checks_passed++))
+    else
+        print_error "Python3 not found"
+    fi
+    
+    # Check if adb is available
+    if command_exists adb; then
+        ((checks_passed++))
+    else
+        print_error "ADB not found"
+    fi
+    
+    # Check if git is available
+    if command_exists git; then
+        ((checks_passed++))
+    else
+        print_error "Git not found"
+    fi
+    
+    # Check if debloater.py exists and is executable
+    if [ -x "$DEST_DIR/debloater.py" ]; then
+        ((checks_passed++))
+    else
+        print_error "debloater.py not found or not executable"
+    fi
+    
+    if [ $checks_passed -eq $total_checks ]; then
+        print_success
+        return 0
+    else
+        print_error "Installation verification failed ($checks_passed/$total_checks checks passed)"
+        echo -e "For support, visit: ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+        return 1
+    fi
 }
 
-# Cleanup on failure
-cleanup() {
-    [ -d "$INSTALL_DIR" ] && rm -rf "$INSTALL_DIR"
-    [ -f "$PREFIX/bin/debloat" ] && rm -f "$PREFIX/bin/debloat"
+# Function to display final instructions
+show_completion_message() {
+    echo -e "\n${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
+    echo -e "\n${GREEN_COLOR}Usage Options:${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}1.${RESET_COLOR} Type ${GREEN_COLOR}'debloat'${RESET_COLOR} from anywhere in Termux"
+    echo -e "${GREEN_COLOR}2.${RESET_COLOR} Or run ${GREEN_COLOR}'python3 $DEST_DIR/debloater.py'${RESET_COLOR}"
+    echo -e "\n${GREEN_COLOR}Note:${RESET_COLOR} Make sure to enable USB debugging on your Android device"
+    echo -e "and connect it via USB before running the debloater."
+    echo -e "\n${GREEN_COLOR}Support:${RESET_COLOR} ${TELEGRAM_COLOR}${SUPPORT_GROUP_URL}${RESET_COLOR}"
+    echo -e "${GREEN_COLOR}${'─' * 60}${RESET_COLOR}"
 }
 
-# Main installation process
+# Main installation function
 main() {
-    # Trap for cleanup
-    trap 'echo -e "\n${ERROR}Installation cancelled${RESET}"; cleanup; exit 1' INT TERM
+    # Clear screen for better presentation
+    clear
     
-    # Installation steps
-    show_header
-    check_environment
+    # Print header
+    print_header
     
-    log_info "Starting installation process..."
-    echo ""
+    # Check if we're running in Termux
+    if [ ! -d "/data/data/com.termux" ]; then
+        print_error "This script is designed to run in Termux environment"
+        exit 1
+    fi
     
-    update_packages
-    install_essentials
-    verify_tools
-    download_debloater
-    setup_launcher
+    # Step 1: Update and upgrade Termux
+    update_termux
     
-    echo ""
-    show_completion
+    # Step 2: Install required packages
+    install_packages
+    
+    # Step 3: Setup repository
+    setup_repository
+    
+    # Step 4: Set up permissions
+    setup_permissions
+    
+    # Step 5: Create alias
+    create_alias
+    
+    # Step 6: Verify installation
+    if verify_installation; then
+        # Step 7: Show completion message
+        show_completion_message
+        
+        # Make alias available in current session
+        exec bash
+    else
+        exit 1
+    fi
 }
 
-# Run installation
+# Run main function
 main "$@"
