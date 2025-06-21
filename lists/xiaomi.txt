@@ -1,0 +1,47 @@
+#Tracking / Analytics
+com.miui.analytics (Tracking Application)
+com.miui.bugreport (Tracking Application)
+com.miui.daemon (Tracking Application)
+com.miui.miservice (Tracking Application)
+com.miui.yellowpage (Tracking Application)
+com.xiaomi.glgm (Tracking Application)
+com.xiaomi.joyose (Tracking Application)
+
+#Ad-related
+com.miui.msa.global (Ad Serving Application)
+com.miui.global.packageinstaller (Ad-based App Installer)
+com.android.browser (Browser with Ads)
+com.miui.player (Music Player with Ads)
+com.miui.videoplayer (Video Player with Ads)
+com.android.providers.downloads.ui (Downloads Application with Ads)
+com.mi.android.globalFileexplorer (Ad-based File Explorer)
+
+#Xiaomi Core Apps
+com.miui.cleanmaster (Cleaner)
+com.miui.weather2 (Weather Application)
+com.miui.android.fashiongallery (Wallpaper Carousel)
+com.miui.hybrid (Quick Apps)
+com.miui.hybrid.accessory (Quick Apps Addon)
+com.miui.translation.kingsoft (Translation Service)
+com.miui.translation.youdao (Translation Service)
+com.miui.translation.xmcloud (Translation Service)
+com.miui.translationservice (Translation Service)
+com.mi.android.globalminusscreen (App Vault)
+com.mi.health (Mi Health)
+
+#Xiaomi Financial Services
+com.mipay.wallet.id (Mi Pay)
+com.mipay.wallet.in (Mi Pay)
+com.xiaomi.payment (Mi Pay)
+com.micredit.in (Mi Credit)
+
+#File & App Management
+com.xiaomi.midrop (ShareMe / Mi Drop)
+com.xiaomi.mipicks (GetApps)
+com.xiaomi.mirecycle (Recycle Service)
+
+#System Components
+com.mi.webkit.core (Xiaomi System WebView)
+android.autoinstalls.config.Xiaomi.ginkgo (Auto Installs from Play Store)
+cn.wps.xiaomi.abroad.lite (Mi Doc Viewer - XPS based)
+com.android.calendar (Calendar with Ads)

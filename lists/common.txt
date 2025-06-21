@@ -1,0 +1,26 @@
+#Google Bloatwares
+com.android.chrome (Chrome)
+com.google.android.keep (Keep notes)
+com.google.android.gm (Gmail)
+com.google.ar.core (AR Core/Google Play Services for AR)
+com.google.android.apps.tachyon (Google duo)
+com.google.android.calendar (Google calendar)
+com.google.android.videos (Google play movies)
+com.google.android.apps.photos (Google photos)
+com.google.android.apps.maps (Map)
+com.google.android.apps.wellbeing (Wellbeing)
+com.google.android.youtube (YouTube)
+com.google.android.apps.youtube.music (YouTube Music)
+com.google.android.apps.nbu.files (Files)
+com.google.android.apps.docs (Google Drive)
+com.google.ar.lens (Google Lens)
+com.google.android.apps.nbu.paisa.user (GPay)
+com.google.android.marvin.talkback (Talkback)
+
+#Facebook Bloatwares
+com.facebook.appmanager (Facebook services)
+com.facebook.services (Facebook services)
+com.facebook.system (Facebook system)
+
+#Others
+com.netflix.mediaclient (Netflix)
