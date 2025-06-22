@@ -184,7 +184,8 @@ fi
 
 # Print installation summary with exact styling from the image
 echo
-echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
+echo -e "${GREEN_COLOR}$(printf '─%.0s' {1..10})Android/OEM Debloate Installer$(printf '─%.0s' {1..10})${RESET_COLOR}"
+#echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
 echo -e "Author: TechGeekZ"
 echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
