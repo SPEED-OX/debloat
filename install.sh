@@ -188,8 +188,8 @@ echo
 echo -e "$(printf '─%.0s' {1..10})${GREEN_COLOR}Android/OEM Debloate Installer${RESET_COLOR}$(printf '─%.0s' {1..10})"
 echo
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}   : ${GREEN_COLOR}1.0${RESET_COLOR}"
-echo -e "Author: TechGeekZ"
-echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}    : ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
+echo -e "Author    : TechGeekZ"
+echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
 echo
 echo -e "$(printf '─%.0s' {1..13})${GREEN_COLOR}Installation Successful!${RESET_COLOR}$(printf '─%.0s' {1..13})"
 #echo -e "$(printf '─%.0s' {1..50})"
