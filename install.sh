@@ -1,8 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Universal Android Bloatware Remover - Termux Installation Script
-# Author: TechGeekZ
+# Android/OEM Bloatware Remover - Installation Script
 # Version: 1.0
+# Author : TechGeekZ
 
 # ANSI color codes matching debloater.py style
 BRAND_COLORS_XIAOMI='\033[38;5;208m'  # Orange
