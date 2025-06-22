@@ -190,8 +190,9 @@ echo
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
 echo -e "Author: TechGeekZ"
 echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-echo -e "$(printf '─%.0s' {1..50})"
+echo 
+echo-e "$(printf '─%.0s' {1..50})"
 echo
 echo
-echo -e "${GREEN_COLOR}      Installation Successful      ${RESET_COLOR}"
+echo -e "${GREEN_COLOR}            Installation Successful${RESET_COLOR}"
 echo -e "use command ~ ${GREEN_COLOR}debloat${RESET_COLOR}"
