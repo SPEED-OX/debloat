@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" Universal Android Bloatware Remover ----------------------------------- This script detects the connected Android device's brand and uses the corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
+""" Android/OEM Debloat Uninstaller----------------------------------- This script detects the connected Android device's brand and uses the corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
 ## For support, visit: https://t.me/TechGeekZ_chat
 
@@ -63,12 +63,12 @@ def check_adb_connection():
     try:
         result = subprocess.run(['adb', 'version'], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
-            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+            print(f"\n- Checking ADB Connection: {RED_COLOR}DISCONNECTED{RESET_COLOR}")
             print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
             print("[Error] ADB is not installed or not in PATH.")
             return False
     except Exception as e:
-        print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+        print(f"\n- Checking ADB Connection: {RED_COLOR}DISCONNECTED{RESET_COLOR}")
         print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
         print(f"[Error] ADB is not available: {e}")
         return False
@@ -77,7 +77,7 @@ def check_adb_connection():
     try:
         result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
-            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+            print(f"\n- Checking ADB Connection: {RED_COLOR}DISCONNECTED{RESET_COLOR}")
             print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
             print("[Error] Failed to check device connection.")
             return False
@@ -86,20 +86,20 @@ def check_adb_connection():
         connected_devices = [line for line in devices if line.strip() and 'device' in line]
 
         if not connected_devices:
-            print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
-            print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
-            print("[Status] No devices connected via ADB.")
+            print(f"\n- Checking ADB Connection: {RED_COLOR}DISCONNECTED{RESET_COLOR}")
+            print(f"{RED_COLOR}- connect to adb first!{RESET_COLOR}")
+            print("[Status] No devices connected via ADB,")
             print("Please ensure:")
             print("- USB debugging is enabled on your device")
             print("- Device is connected via USB")
             print("- You have authorized the ADB connection on your device")
             return False
 
-        print(f"**Checking ADB Connection Status: {GREEN_COLOR}SUCCESSFUL{RESET_COLOR}")
+        print(f"\n- Checking ADB Connection: {GREEN_COLOR}CONNECTED{RESET_COLOR}")
         return True
 
     except Exception as e:
-        print(f"**Checking ADB Connection Status: {RED_COLOR}UNSUCCESSFUL{RESET_COLOR}")
+        print(f"\n- Checking ADB Connection: {RED_COLOR}CONNECTED{RESET_COLOR}")
         print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
         print(f"[Error] Failed to check device connection: {e}")
         return False
@@ -339,11 +339,11 @@ def run_adb_command(package, action):
         print(f"For troubleshooting or assistance, visit: {SUPPORT_GROUP_URL}")
 
 def main():
-    print(f"\n** Universal Android Bloatware Remover **")
-    print(f"{GREEN_COLOR}Version{RESET_COLOR}: {GREEN_COLOR}1.0{RESET_COLOR}")
-    print(f"Author: TechGeekZ")
+    print(f"\n{'─' * 14}{GREEN_COLOR}Android/OEM  Debloater{RESET_COLOR}{'─' * 14}")
+    print(f"\n{GREEN_COLOR}Version{RESET_COLOR} : {GREEN_COLOR}1.0{RESET_COLOR}")
+    print(f"Author  : TechGeekZ")
     print(f"{TELEGRAM_COLOR}Telegram{RESET_COLOR}: {TELEGRAM_COLOR}https://t.me/TechGeekZ_chat{RESET_COLOR}")
-    print("─" * 50)
+    print(f"\n{"─" * 50}")
 
     # Step 1: Check ADB connection
     if not check_adb_connection():
