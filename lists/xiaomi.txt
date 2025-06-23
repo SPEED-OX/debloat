@@ -10,9 +10,9 @@ com.xiaomi.joyose (Tracking Application)
 #Ad-related
 com.miui.msa.global (Ad Serving Application)
 com.miui.global.packageinstaller (Ad-based App Installer)
-com.android.browser (Browser with Ads)
-com.miui.player (Music Player with Ads)
-com.miui.videoplayer (Video Player with Ads)
+com.android.browser (Ad-based Browser)
+com.miui.player (Ad-based Music Player with)
+com.miui.videoplayer (Ad-based Video Player with)
 com.android.providers.downloads.ui (Downloads Application with Ads)
 com.mi.android.globalFileexplorer (Ad-based File Explorer)
 
