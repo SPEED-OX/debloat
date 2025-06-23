@@ -95,11 +95,11 @@ def check_adb_connection():
             print("- You have authorized the ADB connection on your device")
             return False
 
-        print(f"\n- Checking ADB Connection: {GREEN_COLOR}CONNECTED{RESET_COLOR}")
+        print(f"\n~ Checking ADB Connection: {GREEN_COLOR}CONNECTED{RESET_COLOR}")
         return True
 
     except Exception as e:
-        print(f"\n- Checking ADB Connection: {RED_COLOR}CONNECTED{RESET_COLOR}")
+        print(f"\n~ Checking ADB Connection: {RED_COLOR}CONNECTED{RESET_COLOR}")
         print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
         print(f"[Error] Failed to check device connection: {e}")
         return False
