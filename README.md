@@ -13,7 +13,8 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 ***<ins>DISCLAIMER</ins>***: Use at your own risk. I am not responsible for anything happens to your phone for due to lack of brain.
 #
 
-This project is still in an early stage of development. Check out the issues, and feel free to contribute!  :)
+This project is still in an early stage of development. Check out the issues, and feel free to contribute!  :) This is a community project.
+That means I need you! I'm sure you want to make this project better anyway.
 
 ## Summary
 
