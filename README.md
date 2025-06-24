@@ -23,11 +23,23 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 ```bash
 curl -sS https://raw.githubusercontent.com/SPEED-OX/debloate/main/install.sh | bash
 ```
-2 - ADB Shell Connection <div align="center"> Replace <span style="color:#ff0000">&lt;ip&gt;</span>
- </div>
+2 - ADB Shell Connection
+
+> Replace < *ip* > with < *localhost* > if same device connection
+
+> Open settings>develoer options>wireless debugging>pair device using pairing code
+
 ```bash
 adb pair <ip>:<port> <pairing_code>
 ```
 ```bash
 adb connect <ip>:<port>
 ```
+3 - Run The Tool
+```bash
+debloat
+```
+
+## Help & Support
+- **Telegram**: [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_CH)
+- **YouTube**:
