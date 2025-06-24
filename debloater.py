@@ -144,7 +144,7 @@ def print_colored_brand(brand):
 def get_mapped_brand(brand):
     """
     Returns the mapped brand for bloatware list lookup.
-    For example, 'poco' and 'mi' will return 'xiaomi'.
+    'poco' and 'mi' will return 'xiaomi'.
     """
     return BRAND_MAPPING.get(brand, brand)
 
