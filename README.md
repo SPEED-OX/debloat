@@ -20,7 +20,7 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 - [ ] OnePlus -- Coming Soon
 - [ ] Samsung -- Coming Soon
 - [ ] More
-> Request any specific **BRAND** in <space> [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_Chat)
+> Request any specific **BRAND** in <space> [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_chat)
 
 ## Requirements
 - **Termux**: Install Termux from [GitHub](https://github.com/termux/termux-app/releases) OR [F-Droid](https://f-droid.org/packages/com.termux/)
