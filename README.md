@@ -16,13 +16,15 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 - **Python 3**: Already Included
 - **Android-Tools**: Already Included
 
-##Installation
-**From Termux command line:
+## Installation
+- **From Termux command line:**
+
 1 - Primary Installation
 ```bash
 curl -sS https://raw.githubusercontent.com/SPEED-OX/debloate/main/install.sh | bash
 ```
-2 - ADB Shell Connection
+2 - ADB Shell Connection <div align="center"> Replace <span style="color:#ff0000">&lt;ip&gt;</span>
+ </div>
 ```bash
 adb pair <ip>:<port> <pairing_code>
 ```
