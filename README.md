@@ -1,4 +1,8 @@
-# Android/OEM De-Bloater
+<div align="center">
+  
+  # Android/OEM De-Bloater
+  
+</div>
 
 ## Overview
 The **Android/OEM De-Bloater** is designed to help users easily uninstall unwanted applications (bloatware) from their Android devices. This script works in Termux, a terminal emulator for Android, allowing users to manage any installed applications efficiently through ADB Shell.
