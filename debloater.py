@@ -88,11 +88,11 @@ def check_adb_connection():
         if not connected_devices:
             print(f"\n- Checking ADB Connection: {RED_COLOR}DISCONNECTED{RESET_COLOR}")
             print(f"{RED_COLOR}- connect to adb first!{RESET_COLOR}")
-            print("[Status] No devices connected via ADB,")
+            print("[Status] No devices connected via ADB, Wireless Debugging")
             print("Please ensure:")
-            print("- USB debugging is enabled on your device")
-            print("- Device is connected via USB")
-            print("- You have authorized the ADB connection on your device")
+            print("- wireless debugging is enabled on your device")
+            print("- Device is paired/connected via wireless debugging")
+            #print("- You have authorized the ADB connection on your device")
             return False
 
         print(f"\n~ Checking ADB Connection: {GREEN_COLOR}CONNECTED{RESET_COLOR}")
