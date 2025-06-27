@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.
 
 """ Android/OEM Debloat Uninstaller----------------------------------- This script detects the connected Android device's brand and uses the corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
