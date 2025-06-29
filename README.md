@@ -10,7 +10,7 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 **This tool does not require any 	***<ins>root</ins>*** or ***<ins>modification</ins>*** and specially designed for ***<ins>root</ins>*** & ***<ins>non-root</ins>*** users**
 
 #
-***<ins>DISCLAIMER</ins>***: Use at your own risk. I am not responsible for anything happens to your phone for non-working **BRAIN-CELL**. 
+***<ins>DISCLAIMER</ins>***: Use at your own risk. I am not responsible for anything happens to your phone for non-working **BRAIN-CELL !**
 #
 
 This project is still in an early stage of development. Check out the issues, and feel free to contribute!  :) This is a community project.
