@@ -58,7 +58,7 @@ BRAND_MAPPING = {
     'realme': 'oppo',           # Realme was originally Oppo's sub-brand
     'oneplus': 'oppo',          # OnePlus is now under Oppo
     'honor': 'huawei',          # Honor was Huawei's sub-brand
-    'redmagic': 'nubia',        # Gaming phone brand
+    'redmagic': 'nubia',
 }
 
 def check_adb_connection():
