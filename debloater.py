@@ -52,6 +52,13 @@ TELEGRAM_COLOR = '\033[38;2;37;150;190m'  # Hex #2596be
 BRAND_MAPPING = {
     'poco': 'xiaomi',
     'mi': 'xiaomi',
+    'redmi': 'xiaomi',
+    'black_shark': 'xiaomi',    # Gaming phone sub-brand
+    'iqoo': 'vivo',             # iQOO is Vivo's sub-brand
+    'realme': 'oppo',           # Realme was originally Oppo's sub-brand
+    'oneplus': 'oppo',          # OnePlus is now under Oppo
+    'honor': 'huawei',          # Honor was Huawei's sub-brand
+    'redmagic': 'nubia',        # Gaming phone brand
 }
 
 def check_adb_connection():
