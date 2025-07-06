@@ -1,0 +1,38 @@
+#Tracking / Analytics
+net.oneplus.odm.provider (Insight Provider)
+net.oneplus.odm (OnePlus System Service / Telemetry)
+net.oneplus.push (OnePlus Push Notifications)
+com.heytap.habit.analysis (HeyTap Habit Analysis)
+
+#OnePlus Core Apps
+com.oplus.themestore (OPlus Theme Store)
+com.heytap.themestore (HeyTap Theme Store)
+com.heytap.pictorial (Lock Screen Magazine)
+com.oneplus.brickmode (OnePlus Zen Mode)
+com.oneplus.gamespace (OnePlus Game Space)
+com.oneplus.opshelf (OnePlus Shelf)
+com.oneplus.opsports (Cricket Scores)
+com.oneplus.note (OnePlus Notes)
+net.oneplus.forums (OnePlus Community)
+com.oneplus.opwlb (Work-Life Balance)
+com.oneplus.chargingpilar (OnePlus Charging Stations)
+com.heytap.browser (HeyTap Browser)
+com.heytap.reader (HeyTap Reader)
+com.heytap.health (HeyTap Health)
+com.heytap.market (HeyTap App Market)
+com.oneplus.market (HydrogenOS App-store Stub)
+com.oneplus.wallpaper (OnePlus Live Wallpapers)
+
+#OnePlus Financial Services
+com.oneplus.ifaaservice (IFAA Biometric Auth for Alipay)
+
+#File & App Management
+com.oneplus.backuprestore (OnePlus Switch)
+com.heytap.cloud (HeyTap Cloud)
+
+#System Components
+com.oneplus.commonoverlay.android (Android System Theme Pack)
+cn.oneplus.opmms (OPMmsLocation)
+com.oneplus.diagnosemanager (Diagnose Manager)
+com.oneplus.ses (OPSes Authentication)
+com.heytap.msc (HeyTap Cloud Core)
