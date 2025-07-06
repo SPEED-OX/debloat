@@ -53,8 +53,8 @@ That's the main point, right?
 - [ ] Huawei
 - [ ] Motorola
 - [ ] Nokia
-- [ ] OnePlus -- Coming Soon
-- [ ] Oppo
+- [x] OnePlus
+- [x] Oppo
 - [x] Realme
 - [ ] Samsung
 - [ ] Sony
