@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """ Android/OEM Debloat Uninstaller
-This script detects the connected Android device's brand and uses the corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
+This script is the simpliest option to unnistall unwantes apps without any sweat using corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
 For support, visit: https://t.me/TechGeekZ_chat
 """
