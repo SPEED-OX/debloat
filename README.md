@@ -9,9 +9,11 @@ The **Android/OEM De-Bloater** is designed to help users easily uninstall unwant
 
 **This tool does not require any 	***<ins>root</ins>*** or ***<ins>modification</ins>*** and specially designed for ***<ins>root</ins>*** & ***<ins>non-root</ins>*** users**
 
-#
+---
+
 ***<ins>DISCLAIMER</ins>***: Use at your own risk. I am not responsible for anything happens to your phone for non-working **BRAIN-CELL !**
-#
+
+---
 
 This project is still in an early stage of development. Check out the issues, and feel free to contribute!  :) This is a community project.
 That means I need you! I'm sure you want to make this project better anyway.
@@ -40,6 +42,7 @@ That's the main point, right?
 - **Backup and Restore**: Optionally retains data for app restoration.
 
 ## Supporting Devices
+---
 <details>
   <summary>Click here to view supporting devices</summary>
   
@@ -82,7 +85,7 @@ That's the main point, right?
 - **From Termux command line:**
 
 1 - Primary Installation
-```bash
+```
 curl -sS https://raw.githubusercontent.com/SPEED-OX/debloate/main/install.sh | bash
 ```
 2 - ADB Shell Connection
@@ -91,14 +94,14 @@ curl -sS https://raw.githubusercontent.com/SPEED-OX/debloate/main/install.sh | b
 
 > Open settings>develoer options>wireless debugging>pair device using pairing code
 
-```bash
+```
 adb pair <ip>:<port> <pairing_code>
 ```
-```bash
+```
 adb connect <ip>:<port>
 ```
 3 - Run The Tool
-```bash
+```
 debloat
 ```
 #
