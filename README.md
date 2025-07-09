@@ -1,7 +1,7 @@
 <div align="center">
   
   # Android/OEM De-Bloater
-  ---
+
 </div>
 
 ## Overview
@@ -42,7 +42,6 @@ That's the main point, right?
 - **Backup and Restore**: Optionally retains data for app restoration.
 
 ## Supporting Devices
----
 <details>
   <summary>Click here to view supporting devices</summary>
   
@@ -73,6 +72,7 @@ That's the main point, right?
 
 </details>
 
+---
 > Request any specific **BRAND** in <space> [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_chat)
 ---
 ## Requirements
