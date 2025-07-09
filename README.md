@@ -1,7 +1,7 @@
 <div align="center">
   
   # Android/OEM De-Bloater
-  
+  ---
 </div>
 
 ## Overview
