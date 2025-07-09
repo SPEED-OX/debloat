@@ -40,7 +40,9 @@ That's the main point, right?
 - **Backup and Restore**: Optionally retains data for app restoration.
 
 ## Supporting Devices
-
+<details>
+  <summary>Click here to view supporting devices</summary>
+  
 - [ ] Archos
 - [ ] Asus
 - [ ] Blackberry
@@ -65,8 +67,11 @@ That's the main point, right?
 - [ ] Wiko
 - [x] Xiaomi (POCO, MI, Redmi)
 - [ ] ZTE
-> Request any specific **BRAND** in <space> [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_chat)
 
+</details>
+
+> Request any specific **BRAND** in <space> [![Telegram Channel](https://img.shields.io/badge/-telegram-red?color=white&logo=telegram&logoColor=blue)](https://t.me/TechGeekZ_chat)
+---
 ## Requirements
 - **Termux**: Install Termux from [GitHub](https://github.com/termux/termux-app/releases) OR [F-Droid](https://f-droid.org/packages/com.termux/)
 - **WiFi/Hotspot**: Must be connecteed to a WiFi or Hotspot Network
