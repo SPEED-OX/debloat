@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
 # Android/OEM Bloatware Remover - Installation Script
-# Version: 1.0
+# Version: 1.1
 # Author : TechGeekZ
 
 # ANSI color codes matching debloater.py style
@@ -30,7 +30,7 @@ fi
 if [ ! -f "$DEBLOATER_USERS" ]; then
     echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
     apt upgrade -y > /dev/null 2>&1
-    curl -Is https://github.com/SPEED-OX/debloate/releases/download/tracking/totalusers > /dev/null 2>&1
+    curl -Is https://github.com/SPEED-OX/debloat/releases/download/tracking/totalusers > /dev/null 2>&1
     touch "$DEBLOATER_USERS"
 fi
 
@@ -103,10 +103,10 @@ fi
 # Download and extract repository as zip
 _progress
 cd "$HOME"
-curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloate.zip
+curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloat.zip
 
 # Extract zip file
-unzip -q debloate.zip
+unzip -q debloat.zip
 
 # Create installation directory and copy files
 _progress
@@ -114,18 +114,18 @@ rm -rf "$INSTALL_DIR" 2>/dev/null
 mkdir -p "$INSTALL_DIR"
 
 # Copy main script
-if [ -f "$HOME/debloate-main/debloater.py" ]; then
-    cp "$HOME/debloate-main/debloater.py" "$INSTALL_DIR/"
+if [ -f "$HOME/debloat-main/debloater.py" ]; then
+    cp "$HOME/debloat-main/debloater.py" "$INSTALL_DIR/"
     chmod +x "$INSTALL_DIR/debloater.py"
 fi
 
 # Copy lists directory
-if [ -d "$HOME/debloate-main/lists" ]; then
-    cp -r "$HOME/debloate-main/lists" "$INSTALL_DIR/"
+if [ -d "$HOME/debloat-main/lists" ]; then
+    cp -r "$HOME/debloat-main/lists" "$INSTALL_DIR/"
 fi
 
 # Clean up temporary files (including ZIP)
-rm -rf "$HOME/debloate.zip" "$HOME/debloate-main"
+rm -rf "$HOME/debloat.zip" "$HOME/debloat-main"
 
 # Create executable wrapper script
 cat > "$PREFIX/bin/debloat" << 'EOF'
