@@ -5,15 +5,17 @@
 # Version: 1.0
 
 # ANSI color codes matching debloater.py style
+BRAND_COLORS_XIAOMI='\033[38;5;208m'  # Orange
 GREEN_COLOR='\033[92m'
 RED_COLOR='\033[91m'
 YELLOW_COLOR='\033[93m'
 CYAN_COLOR='\033[96m'
 RESET_COLOR='\033[0m'
 TELEGRAM_COLOR='\033[38;2;37;150;190m'  # Hex #2596be
+LIGHT_BLUE_COLOR='\033[38;5;117m'
 
 # Configuration
-GITHUB_REPO="https://github.com/SPEED-OX/debloat"  # Updated repository link
+GITHUB_REPO="https://github.com/SPEED-OX/debloat"
 INSTALL_DIR="$HOME/android-debloater"
 DEBLOATER_USERS="$PREFIX/bin/.debloaterusersok"
 
@@ -37,27 +39,36 @@ echo -ne "\r${GREEN_COLOR}url check${RESET_COLOR} ..."
 # Check main repository connection
 main_repo=$(grep -E '^deb ' /data/data/com.termux/files/usr/etc/apt/sources.list | awk '{print $2}' | head -n 1)
 
-if ! curl -s --retry 4 $main_repo > /dev/null; then
+curl -s --retry 4 $main_repo > /dev/null
+exit_code=$?
+
+if [ $exit_code -eq 6 ]; then
     echo -e "\n${RED_COLOR}Request to $main_repo failed. Please check your internet connection.${RESET_COLOR}\n"
-    exit 1
+    exit 6
+elif [ $exit_code -eq 35 ]; then
+    echo -e "\n${RED_COLOR}The $main_repo is blocked in your current country.${RESET_COLOR}\n"
+    exit 35
 fi
 
 # Check GitHub connection
-if ! curl -s --retry 4 https://raw.githubusercontent.com > /dev/null; then
-    echo -e "\n${RED_COLOR}GitHub connection failed. Please check your internet connection.${RESET_COLOR}\n"
-    exit 1
+git_repo="https://raw.githubusercontent.com"
+
+curl -s --retry 4 $git_repo > /dev/null
+exit_code=$?
+
+if [ $exit_code -eq 6 ]; then
+    echo -e "\n${RED_COLOR}Request to $git_repo failed. Please check your internet connection.${RESET_COLOR}\n"
+    exit 6
+elif [ $exit_code -eq 35 ]; then
+    echo -e "\n${RED_COLOR}The $git_repo is blocked in your current country.${RESET_COLOR}\n"
+    exit 35
 fi
 
 echo -ne "\r${GREEN_COLOR}apt update${RESET_COLOR} ..."
-if ! apt update > /dev/null 2>&1; then
-    echo -e "\n${RED_COLOR}apt update failed. Please check your internet connection.${RESET_COLOR}"
-    exit 1
-fi
+apt update > /dev/null 2>&1
 
 echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
-if ! apt upgrade -y > /dev/null 2>&1; then
-    echo -e "\n${YELLOW_COLOR}[WARNING]${RESET_COLOR} apt upgrade failed, continuing with installation..."
-fi
+apt upgrade -y > /dev/null 2>&1
 
 # Progress tracking system
 charit=0
@@ -78,17 +89,11 @@ _progress() {
 
 # Install python3
 _progress
-if ! pkg install python3 -y >/dev/null 2>&1; then
-    echo -e "\n${RED_COLOR}Failed to install python3. Please check your internet connection.${RESET_COLOR}"
-    exit 1
-fi
+pkg install python3 -y >/dev/null 2>&1
 
 # Install android-tools
 _progress
-if ! pkg install android-tools -y >/dev/null 2>&1; then
-    echo -e "\n${RED_COLOR}Failed to install android-tools. Please check your internet connection.${RESET_COLOR}"
-    exit 1
-fi
+pkg install android-tools -y >/dev/null 2>&1
 
 # Install unzip if not available
 if ! command -v unzip >/dev/null 2>&1; then
@@ -98,16 +103,10 @@ fi
 # Download and extract repository as zip
 _progress
 cd "$HOME"
-if ! curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloate.zip; then
-    echo -e "\n${RED_COLOR}Failed to download repository.${RESET_COLOR}"
-    exit 1
-fi
+curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloat.zip
 
-_progress
-if ! unzip -q debloate.zip; then
-    echo -e "\n${RED_COLOR}Failed to extract repository.${RESET_COLOR}"
-    exit 1
-fi
+# Extract zip file
+unzip -q debloat.zip
 
 # Create installation directory and copy files
 _progress
@@ -118,9 +117,6 @@ mkdir -p "$INSTALL_DIR"
 if [ -f "$HOME/debloat-main/debloater.py" ]; then
     cp "$HOME/debloat-main/debloater.py" "$INSTALL_DIR/"
     chmod +x "$INSTALL_DIR/debloater.py"
-else
-    echo -e "\n${RED_COLOR}debloater.py not found in downloaded files.${RESET_COLOR}"
-    exit 1
 fi
 
 # Copy lists directory
@@ -129,7 +125,7 @@ if [ -d "$HOME/debloat-main/lists" ]; then
 fi
 
 # Clean up temporary files (including ZIP)
-rm -rf "$HOME/debloate.zip" "$HOME/debloat-main"
+rm -rf "$HOME/debloat.zip" "$HOME/debloat-main"
 
 # Create executable wrapper script
 cat > "$PREFIX/bin/debloat" << 'EOF'
@@ -169,6 +165,8 @@ fi
 
 # Change to debloater directory and run the script
 cd "$DEBLOATER_DIR"
+
+# Use python3 if available, otherwise python
 if command -v python3 >/dev/null 2>&1; then
     python3 "$DEBLOATER_SCRIPT" "$@"
 else
@@ -184,7 +182,7 @@ if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
     echo "alias debloat='$PREFIX/bin/debloat'" >> "$HOME/.bashrc"
 fi
 
-# Print installation summary
+# Print installation summary with exact styling from the image
 echo
 echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
 echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
