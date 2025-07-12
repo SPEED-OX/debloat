@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 """
 Android/OEM Debloat Uninstaller
 version = 1.1.1
