@@ -10,6 +10,24 @@ Android/OEM De-Bloater version 1.0.0:
 
 Android/OEM De-Bloater version 1.0.1:
 
+- Switched to Wireless ADB(Andriod Debug Bridge) Debugging from USB Debugging
+
 - Improve Style/Design
 
 - Smooth Error Handling
+
+#
+
+Android/OEM De-Bloater version 1.1.0:
+
+- Updated Wireless ADB for better performance
+
+- Implemented Brand Category
+
+- Updated Brand Category based Bloatware Package list
+
+- Implemented Batch Package Selection, Modify multiple packages at once
+ 
+- Faster response
+
+- Improved Design with Colour Styling
