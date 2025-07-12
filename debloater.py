@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-Android/OEM Debloat Uninstaller
-version = 1.1.1
+""" Android/OEM Debloat Uninstaller
 This script is the simpliest option to unnistall unwantes apps without any sweat using corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
 For support, visit: https://t.me/TechGeekZ_chat
@@ -13,20 +11,11 @@ import re
 import subprocess
 import sys
 
-BRAND_MAPPING = {
-    'poco': 'xiaomi',
-    'mi': 'xiaomi',
-    'redmi': 'xiaomi',
-    'black_shark': 'xiaomi',    # Xiaomi's sub-brand
-    'iqoo': 'vivo',             # iQOO is Vivo's sub-brand
-    'realme': 'oppo',           # Realme was originally Oppo's sub-brand
-    'oneplus': 'oppo',          # OnePlus is now under Oppo
-    'honor': 'huawei',          # Honor was Huawei's sub-brand
-    'redmagic': 'nubia',
-}
+SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"
 
+# ANSI color codes for different brands and UI elements
 BRAND_COLORS = {
-    'realme': '\033[93m',       # Yellow
+    'realme': '\033[93m',      # Yellow
     'xiaomi': '\033[38;5;208m', # Orange
     'poco': '\033[38;5;208m',   # Orange (same as Xiaomi)
     'mi': '\033[38;5;208m',     # Orange (same as Xiaomi)
@@ -52,16 +41,30 @@ BRAND_COLORS = {
     'fairphone': '\033[92m',    # Green
 }
 
+# UI Colors
 RESET_COLOR = '\033[0m'
 GREEN_COLOR = '\033[92m'
 RED_COLOR = '\033[91m'
-LIGHT_BLUE_COLOR = '\033[38;5;117m'
-TELEGRAM_COLOR = '\033[38;2;37;150;190m'
+LIGHT_BLUE_COLOR = '\033[38;5;117m'  # Light blue for telegram link
+TELEGRAM_COLOR = '\033[38;2;37;150;190m'  # Hex #2596be
 CYAN_COLOR = '\033[96m'
 
-SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"
+# Brand mapping
+BRAND_MAPPING = {
+    'poco': 'xiaomi',
+    'mi': 'xiaomi',
+    'redmi': 'xiaomi',
+    'black_shark': 'xiaomi',    # Xiaomi's sub-brand
+    'iqoo': 'vivo',             # iQOO is Vivo's sub-brand
+    'realme': 'oppo',           # Realme was originally Oppo's sub-brand
+    'oneplus': 'oppo',          # OnePlus is now under Oppo
+    'honor': 'huawei',          # Honor was Huawei's sub-brand
+    'redmagic': 'nubia',
+}
 
 def check_adb_connection():
+    """ Checks if ADB is available and if any device is connected. Returns True if connected, False otherwise. """
+    # Check if adb is available
     try:
         result = subprocess.run(['adb', 'version'], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
@@ -74,6 +77,8 @@ def check_adb_connection():
         print(f"{RED_COLOR}connect to adb first{RESET_COLOR}")
         print(f"[Error] ADB is not available: {e}")
         return False
+
+    # Check device connection
     try:
         result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, timeout=5)
         if result.returncode != 0:
@@ -92,6 +97,7 @@ def check_adb_connection():
             print("\nPlease ensure:")
             print("- wireless debugging is enabled on your device")
             print("- Device is paired/connected via wireless debugging")
+            #print("- You have authorized the ADB connection on your device")
             return False
 
         print(f"\n~ Checking ADB Connection: {GREEN_COLOR}CONNECTED{RESET_COLOR}")
@@ -104,6 +110,7 @@ def check_adb_connection():
         return False
 
 def get_device_brand():
+    #Attempts to detect the Android device brand using adb. Returns the brand as a lowercase string, or None if detection fails.
     try:
         result = subprocess.run(
             ['adb', 'shell', 'getprop', 'ro.product.brand'],
@@ -125,6 +132,7 @@ def get_device_brand():
         return None
 
 def print_colored_brand(brand):
+    """ Prints the device brand in its corresponding brand color. """
     print()
     if brand in BRAND_COLORS:
         color = BRAND_COLORS[brand]
@@ -134,12 +142,15 @@ def print_colored_brand(brand):
     print()
 
 def get_mapped_brand(brand):
+    """ Returns the mapped brand for bloatware list lookup. """
     return BRAND_MAPPING.get(brand, brand)
 
 def check_brand_list_availability(lists_dir, brand):
+    """ Checks if a bloatware list file exists for the given brand. Uses brand mapping to find the correct list file. Returns the full path if found, otherwise None. """
     if not brand:
         return None
 
+    # Get the mapped brand for file lookup
     mapped_brand = get_mapped_brand(brand)
     brand_file = f"{mapped_brand}.txt"
     file_path = os.path.join(lists_dir, brand_file)
@@ -150,6 +161,7 @@ def check_brand_list_availability(lists_dir, brand):
         return None
 
 def get_installed_packages():
+    """ Gets all installed packages on the connected device. Returns a set of package names. """
     try:
         result = subprocess.run(
             ['adb', 'shell', 'pm', 'list', 'packages'],
@@ -172,6 +184,7 @@ def get_installed_packages():
         return set()
 
 def parse_bloatware_file(filepath):
+    """ Parses the specified bloatware list file, extracting tuples of (package_name, app_name). Expected format: "com.package.name  ( App Name )" or "com.package.name" """
     apps = []
 
     try:
@@ -204,6 +217,7 @@ def parse_bloatware_file(filepath):
         return []
 
 def display_matching_packages(apps, installed_packages):
+    """ Displays packages from the bloatware list that are actually installed on the device. """
     matching_apps = []
 
     for package, app_name in apps:
@@ -227,15 +241,16 @@ def display_matching_packages(apps, installed_packages):
     return matching_apps
 
 def parse_selection(selection_str, max_count):
+    """ Parses user selection string and returns list of valid indices. """
     indices = set()
     parts = [part.strip() for part in selection_str.split(',')]
 
     for part in parts:
-        if '-' in part:
+        if '-' in part:  # Handle range (e.g., "1-5")
             try:
                 start, end = part.split('-', 1)
-                start_idx = int(start.strip()) - 1
-                end_idx = int(end.strip()) - 1
+                start_idx = int(start.strip()) - 1  # Convert to zero-based
+                end_idx = int(end.strip()) - 1      # Convert to zero-based
 
                 if start_idx < 0 or end_idx >= max_count or start_idx > end_idx:
                     print(f"{RED_COLOR}Invalid range: {part} (valid range: 1-{max_count}){RESET_COLOR}")
@@ -245,9 +260,9 @@ def parse_selection(selection_str, max_count):
             except ValueError:
                 print(f"{RED_COLOR}Invalid range format: {part}{RESET_COLOR}")
                 return []
-        else:
+        else:  # Handle single number
             try:
-                idx = int(part.strip()) - 1
+                idx = int(part.strip()) - 1  # Convert to zero-based
                 if idx < 0 or idx >= max_count:
                     print(f"{RED_COLOR}Invalid package number: {int(part)} (valid range: 1-{max_count}){RESET_COLOR}")
                     return []
@@ -259,6 +274,7 @@ def parse_selection(selection_str, max_count):
     return sorted(list(indices))
 
 def choose_app_and_action(apps):
+    """ Presents the list of apps and prompts the user to select one or all, then choose the desired action. Returns a tuple (indices, action). """
     while True:
         selected = input(f"\n{GREEN_COLOR}~{RESET_COLOR} Select Package(s) [{GREEN_COLOR}1{RESET_COLOR}~{GREEN_COLOR}{len(apps)}{RESET_COLOR}]: ").strip()
         if selected == '0':
@@ -279,10 +295,11 @@ def choose_app_and_action(apps):
         package, app_name = apps[idx]
         print(f"{GREEN_COLOR}{idx+1:2d}. {RESET_COLOR} {package} ({app_name})")
 
+    # Confirm selection
     confirm = input(f"\n{GREEN_COLOR}~{RESET_COLOR} Confirm Selection? ({GREEN_COLOR}y{RESET_COLOR}/{RED_COLOR}n{RESET_COLOR}): ").strip().lower()
     if confirm not in ['y', 'yes', '']:
         print("Selection cancelled. Please try again.")
-        return choose_app_and_action(apps)
+        return choose_app_and_action(apps)  # Recursive call to restart selection
 
     print(f"\n{GREEN_COLOR}~{RESET_COLOR} Choose Action [{GREEN_COLOR}1{RESET_COLOR}~{GREEN_COLOR}5{RESET_COLOR}]")
     print(f"{GREEN_COLOR}1. {RESET_COLOR} Uninstall ({GREEN_COLOR}keep data for restore{RESET_COLOR})")
@@ -309,6 +326,7 @@ def get_action_text(action):
     return actions.get(action, "processing")
 
 def run_adb_command(package, action):
+    """ Executes the appropriate adb command for the selected action and package. Returns True if successful, False otherwise. """
     if action == 1:
         cmd = f'adb shell pm uninstall -k --user 0 {package}'
     elif action == 2:
@@ -345,9 +363,11 @@ def main():
     print(f"{TELEGRAM_COLOR}Telegram{RESET_COLOR}: {TELEGRAM_COLOR}https://t.me/TechGeekZ_chat{RESET_COLOR}")
     print(f"\n{'─' * 50}")
 
+    # Step 1: Check ADB connection
     if not check_adb_connection():
         sys.exit(1)
 
+    # Step 2: Get and display device brand
     brand = get_device_brand()
     if not brand:
         print("[Error] Could not detect device brand. Exiting.")
@@ -355,17 +375,21 @@ def main():
 
     print_colored_brand(brand)
 
+    # Step 3: Check if brand list is available
     lists_dir = os.path.join(os.path.dirname(__file__), 'lists')
 
     if not os.path.exists(lists_dir):
         print(f"[Error] Lists directory not found: {lists_dir}")
         sys.exit(1)
 
+    # Check for brand-specific list
     brand_file_path = check_brand_list_availability(lists_dir, brand)
 
+    # Check for common list
     common_file_path = os.path.join(lists_dir, 'common.txt')
     common_exists = os.path.exists(common_file_path)
 
+    # If no brand-specific list exists, show error message
     if not brand_file_path:
         if common_exists:
             print(f"{RED_COLOR}[ERROR]{RESET_COLOR} Listing only common bloatwares{RED_COLOR}! {RESET_COLOR}")
@@ -378,18 +402,22 @@ def main():
             print(f"For support or to request this brand, visit: {SUPPORT_GROUP_URL}")
             sys.exit(1)
 
+    # Step 4: Get installed packages
     installed_packages = get_installed_packages()
 
     if not installed_packages:
         print("[Error] Could not retrieve installed packages from device.")
         sys.exit(1)
 
+    # Step 5: Parse bloatware lists
     all_apps = []
 
+    # Load brand-specific list if available
     if brand_file_path:
         brand_apps = parse_bloatware_file(brand_file_path)
         all_apps.extend(brand_apps)
 
+    # Always load common list if available
     if common_exists:
         common_apps = parse_bloatware_file(common_file_path)
         all_apps.extend(common_apps)
@@ -399,14 +427,17 @@ def main():
         print(f"For support, visit: {SUPPORT_GROUP_URL}")
         sys.exit(1)
 
+    # Step 6: Display matching packages
     matching_apps = display_matching_packages(all_apps, installed_packages)
 
     if not matching_apps:
         print("\nYour device appears to be clean of the known bloatware packages!")
         sys.exit(0)
 
+    # Step 7: Let user choose action
     indices, action = choose_app_and_action(matching_apps)
 
+    # Step 8: Execute actions with error handling
     action_text = get_action_text(action)
     successful_count = 0
     failed_count = 0
@@ -420,6 +451,7 @@ def main():
         else:
             failed_count += 1
 
+    # Summary
     print(f"\n{'─' * 50}")
     print(f"{' ' * 18}~ {CYAN_COLOR}CONCLUSION{RESET_COLOR} ~")
     print(f"{'─' * 50}")
