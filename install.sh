@@ -1,8 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Universal Android Bloatware Remover - Termux Installation Script
-# Author: TechGeekZ
+# Android/OEM Bloatware Remover - Installation Script
 # Version: 1.0
+# Author : TechGeekZ
 
 # ANSI color codes matching debloater.py style
 BRAND_COLORS_XIAOMI='\033[38;5;208m'  # Orange
@@ -125,7 +125,7 @@ if [ -d "$HOME/debloat-main/lists" ]; then
 fi
 
 # Clean up temporary files (including ZIP)
-rm -rf "$HOME/debloat.zip" "$HOME/debloat-main"
+rm -rf "$HOME/debloat.zip" "$HOME/debloate-main"
 
 # Create executable wrapper script
 cat > "$PREFIX/bin/debloat" << 'EOF'
@@ -184,11 +184,16 @@ fi
 
 # Print installation summary with exact styling from the image
 echo
-echo -e "${GREEN_COLOR}** Universal Android Bloatware Remover Setup **${RESET_COLOR}"
-echo -e "${GREEN_COLOR}Version${RESET_COLOR}: ${GREEN_COLOR}1.0${RESET_COLOR}"
-echo -e "Author: TechGeekZ"
-echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-echo -e "${GREEN_COLOR}──────────────────────────────────────────────────${RESET_COLOR}"
 echo
-echo -e "${GREEN_COLOR}** INSTALLATION COMPLETED SUCCESSFULLY **${RESET_COLOR}"
-echo -e "use command~ ${GREEN_COLOR}debloat${RESET_COLOR}"
+echo -e "$(printf '─%.0s' {1..10})${GREEN_COLOR}Android/OEM Debloate Installer${RESET_COLOR}$(printf '─%.0s' {1..10})"
+echo
+echo -e "${GREEN_COLOR}Version${RESET_COLOR} : ${GREEN_COLOR}1.0${RESET_COLOR}"
+echo -e "Author  : TechGeekZ"
+echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
+echo
+echo -e "$(printf '─%.0s' {1..13})${GREEN_COLOR}Installation Successful!${RESET_COLOR}$(printf '─%.0s' {1..13})"
+#echo -e "$(printf '─%.0s' {1..50})"
+echo
+#echo
+#echo -e "${GREEN_COLOR}            Installation Successful${RESET_COLOR}"
+echo -e "use command ~ ${GREEN_COLOR}debloat${RESET_COLOR}"
