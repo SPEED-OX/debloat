@@ -2,7 +2,7 @@
 
 """
 Android/OEM Debloat Uninstaller
-version = 1.1
+version = 1.1.1
 This script is the simpliest option to unnistall unwantes apps without any sweat using corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
 For support, visit: https://t.me/TechGeekZ_chat
