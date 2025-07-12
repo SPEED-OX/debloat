@@ -15,7 +15,7 @@ TELEGRAM_COLOR='\033[38;2;37;150;190m'  # Hex #2596be
 LIGHT_BLUE_COLOR='\033[38;5;117m'
 
 # Configuration
-GITHUB_REPO="https://github.com/SPEED-OX/debloate"
+GITHUB_REPO="https://github.com/SPEED-OX/debloat"
 INSTALL_DIR="$HOME/android-debloater"
 DEBLOATER_USERS="$PREFIX/bin/.debloaterusersok"
 
