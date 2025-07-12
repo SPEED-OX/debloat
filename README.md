@@ -86,7 +86,7 @@ That's the main point, right?
 
 1 - Primary Installation
 ```
-curl -sS https://raw.githubusercontent.com/SPEED-OX/debloate/main/install.sh | bash
+curl -sS https://raw.githubusercontent.com/SPEED-OX/debloat/main/install.sh | bash
 ```
 2 - ADB Shell Connection
 
