@@ -20,7 +20,7 @@ Android/OEM De-Bloater version 1.0.1:
 
 Android/OEM De-Bloater version 1.1.0:
 
-- Updated Wireless ADB for better performance
+- Updated Wireless ADB call for better performance
 
 - Implemented Brand Category
 
@@ -31,3 +31,13 @@ Android/OEM De-Bloater version 1.1.0:
 - Faster response
 
 - Improved Design with Colour Styling
+
+#
+
+Android/OEM De-Bloater version 1.1.1:
+
+- Fixed some common issue
+
+- Improved Package handling
+
+- Impoved Design/Style
