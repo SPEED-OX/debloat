@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-""" Android/OEM Debloat Uninstaller
+"""
+Android/OEM Debloat Uninstaller
+version = 1.1
 This script is the simpliest option to unnistall unwantes apps without any sweat using corresponding bloatware list to assist the user in uninstalling, disabling, enabling, or reinstalling apps.
 
 For support, visit: https://t.me/TechGeekZ_chat
@@ -11,11 +13,8 @@ import re
 import subprocess
 import sys
 
-SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"
-
-# ANSI color codes for different brands and UI elements
 BRAND_COLORS = {
-    'realme': '\033[93m',      # Yellow
+    'realme': '\033[93m',       # Yellow
     'xiaomi': '\033[38;5;208m', # Orange
     'poco': '\033[38;5;208m',   # Orange (same as Xiaomi)
     'mi': '\033[38;5;208m',     # Orange (same as Xiaomi)
@@ -45,11 +44,10 @@ BRAND_COLORS = {
 RESET_COLOR = '\033[0m'
 GREEN_COLOR = '\033[92m'
 RED_COLOR = '\033[91m'
-LIGHT_BLUE_COLOR = '\033[38;5;117m'  # Light blue for telegram link
-TELEGRAM_COLOR = '\033[38;2;37;150;190m'  # Hex #2596be
+LIGHT_BLUE_COLOR = '\033[38;5;117m'
+TELEGRAM_COLOR = '\033[38;2;37;150;190m'
 CYAN_COLOR = '\033[96m'
 
-# Brand mapping
 BRAND_MAPPING = {
     'poco': 'xiaomi',
     'mi': 'xiaomi',
@@ -61,6 +59,8 @@ BRAND_MAPPING = {
     'honor': 'huawei',          # Honor was Huawei's sub-brand
     'redmagic': 'nubia',
 }
+
+SUPPORT_GROUP_URL = "https://t.me/TechGeekZ_chat"
 
 def check_adb_connection():
     """ Checks if ADB is available and if any device is connected. Returns True if connected, False otherwise. """
