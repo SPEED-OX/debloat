@@ -126,7 +126,7 @@ def attempt_adb_connect(ip_address, port):
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode == 0 and "connected to" in result.stdout:
             print(f"Connected with: {green}{ip_address}{white}:{green}{port}{white}\n")
-            print(f"~ Use command [ {green}debloat{white} ] to start debloating...")
+            print(f"~ Use command [ {green}debloat{white} ] to start debloating...\n")
             return 0
         print(f"Failed to connect: {red}{ip_address}{white}:{red}{port}{white}", file=sys.stderr)
         print(f"Pair with <IP>:<PORT> first\n")
