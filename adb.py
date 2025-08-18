@@ -12,23 +12,31 @@ import socket
 import sys
 import subprocess
 from zeroconf import ServiceBrowser, Zeroconf
+from os import get_terminal_size
 
 version = "1.0"
 telegram = "https://t.me/TechGeekZ_chat"
 
 red  = '\033[91m'
 cyan = '\033[96m'
-reset = '\033[0m'
 white = '\033[97m'
 green = '\033[92m'
 purple = '\033[95m'
 orange = '\033[38;5;208m'
 
-print(f"\n{'─' * 18}{purple} Wireless ADB {white}{'─' * 18}")
-print(f"\n{green}Version{white}  : {green}{version}{white}")
-print("Author   : Offici5l/TechGeekZ")
-print(f"{cyan}Telegram{white} : {cyan}{telegram}{white}")
-print(f"\n{'─' * 50}{reset}")
+titel = ' Wireless ADB '
+width = get_terminal_size().columns
+
+l1 = '─' * ((width - len(titel)) // 2)
+l2 = '─' * width
+
+print(l1 + purple + titel + white + l1)
+print(f"""
+{green}Version{white}  : {green}{version}{white}
+Author   : Offici5l/TechGeekZ
+{cyan}Telegram{white} : {cyan}{telegram}{white}
+""")
+print(l2)
 
 time.sleep(1)
 
