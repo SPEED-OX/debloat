@@ -359,7 +359,7 @@ def main():
     else:
         extra = ''
     print(f"\n{l3}{green}{title}{white}{l3}{extra}")
-    print(f"\n{green}Version{white}  : {green}{version}")
+    print(f"\n{green}Version{white}  : {green}{version}{white}")
     print("Author   : TechGeekZ")
     print(f"{cyan}Telegram{white} : {cyan}{telegram}{white}\n")
     print(l2)

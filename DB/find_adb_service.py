@@ -24,13 +24,18 @@ green = '\033[92m'
 purple = '\033[95m'
 orange = '\033[38;5;208m'
 
-titel = ' Wireless ADB '
+title = ' Wireless ADB '
 width = get_terminal_size().columns
 
-l1 = '─' * ((width - len(titel)) // 2)
+l1 = '─' * ((width - len(title)) // 2)
 l2 = '─' * width
-
-print(l1 + purple + titel + white + l1)
+extra = '─'
+if (width - len(title)) % 2 != 0:
+    extra = '─'
+else:
+    extra = ''
+        
+print(l1 + purple + title + white + l1 + extra)
 print(f"""
 {green}Version{white}  : {green}{version}{white}
 Author   : Offici5l/TechGeekZ
