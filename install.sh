@@ -1,199 +1,304 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
 # Android/OEM Bloatware Remover - Installation Script
-# Version: 1.1
 # Author : TechGeekZ
+version="1.2"
 
-# ANSI color codes matching debloater.py style
-BRAND_COLORS_XIAOMI='\033[38;5;208m'  # Orange
-GREEN_COLOR='\033[92m'
-RED_COLOR='\033[91m'
-YELLOW_COLOR='\033[93m'
-CYAN_COLOR='\033[96m'
-RESET_COLOR='\033[0m'
-TELEGRAM_COLOR='\033[38;2;37;150;190m'  # Hex #2596be
-LIGHT_BLUE_COLOR='\033[38;5;117m'
+green='\033[92m'; red='\033[91m'; cyan='\033[96m'; white='\033[0m'
+repo="https://github.com/SPEED-OX/debloat"
+inst_dir="$HOME/android-debloater"
+users_ok="$inst_dir/.installed"
+export DEBIAN_FRONTEND=noninteractive
 
-# Configuration
-GITHUB_REPO="https://github.com/SPEED-OX/debloat"
-INSTALL_DIR="$HOME/android-debloater"
-DEBLOATER_USERS="$PREFIX/bin/.debloaterusersok"
+mkdir -p "$inst_dir"
+LOG="$inst_dir/debloater.log"
+exec > >(tee -a "$LOG") 2>&1
+exec 5>>"$LOG"
 
-# Check if running in Termux
-if [ ! -d "/data/data/com.termux" ]; then
-    echo -e "\n${RED_COLOR}This installer is designed for Termux only!${RESET_COLOR}"
-    echo -e "${RED_COLOR}Please install Termux from F-Droid and run this script inside Termux.${RESET_COLOR}\n"
-    exit 1
-fi
-
-# User tracking and initial upgrade
-if [ ! -f "$DEBLOATER_USERS" ]; then
-    echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
-    apt upgrade -y > /dev/null 2>&1
-    curl -Is https://github.com/SPEED-OX/debloat/releases/download/tracking/totalusers > /dev/null 2>&1
-    touch "$DEBLOATER_USERS"
-fi
-
-echo -ne "\r${GREEN_COLOR}url check${RESET_COLOR} ..."
-
-# Check main repository connection
-main_repo=$(grep -E '^deb ' /data/data/com.termux/files/usr/etc/apt/sources.list | awk '{print $2}' | head -n 1)
-
-curl -s --retry 4 $main_repo > /dev/null
-exit_code=$?
-
-if [ $exit_code -eq 6 ]; then
-    echo -e "\n${RED_COLOR}Request to $main_repo failed. Please check your internet connection.${RESET_COLOR}\n"
-    exit 6
-elif [ $exit_code -eq 35 ]; then
-    echo -e "\n${RED_COLOR}The $main_repo is blocked in your current country.${RESET_COLOR}\n"
-    exit 35
-fi
-
-# Check GitHub connection
-git_repo="https://raw.githubusercontent.com"
-
-curl -s --retry 4 $git_repo > /dev/null
-exit_code=$?
-
-if [ $exit_code -eq 6 ]; then
-    echo -e "\n${RED_COLOR}Request to $git_repo failed. Please check your internet connection.${RESET_COLOR}\n"
-    exit 6
-elif [ $exit_code -eq 35 ]; then
-    echo -e "\n${RED_COLOR}The $git_repo is blocked in your current country.${RESET_COLOR}\n"
-    exit 35
-fi
-
-echo -ne "\r${GREEN_COLOR}apt update${RESET_COLOR} ..."
-apt update > /dev/null 2>&1
-
-echo -ne "\r${GREEN_COLOR}apt upgrade${RESET_COLOR} ..."
-apt upgrade -y > /dev/null 2>&1
-
-# Progress tracking system
-charit=0
-total=5
-start_time=$(date +%s)
-
-_progress() {
-    charit=$((charit + 1))
-    percentage=$((charit * 100 / total))
-    if [ $percentage -eq 100 ]; then
-        end_time=$(date +%s)
-        elapsed_time=$((end_time - start_time))
-        echo -ne "\rProgress: $charit/$total ($percentage%) Took: $elapsed_time seconds"
-    else
-        echo -ne "\rProgress: $charit/$total ($percentage%)"
-    fi
+run_log() {
+  echo ">>> $*" >&5
+  "$@" 1>&5 2>&5
 }
 
-# Install python3
-_progress
-pkg install python3 -y >/dev/null 2>&1
+echo
 
-# Install android-tools
-_progress
-pkg install android-tools -y >/dev/null 2>&1
-
-# Install unzip if not available
-if ! command -v unzip >/dev/null 2>&1; then
-    pkg install unzip -y >/dev/null 2>&1
+if [ ! -d "/data/data/com.termux" ]; then
+  echo -e "\n${red}This installer is designed for Termux only!${white}"
+  echo -e "${red}Please install Termux from F-Droid or GitHub and run the installer in Termux environment.${white}\n"
+  exit 1
 fi
 
-# Download and extract repository as zip
-_progress
-cd "$HOME"
-curl -L -s "${GITHUB_REPO}/archive/refs/heads/main.zip" -o debloat.zip
-
-# Extract zip file
-unzip -q debloat.zip
-
-# Create installation directory and copy files
-_progress
-rm -rf "$INSTALL_DIR" 2>/dev/null
-mkdir -p "$INSTALL_DIR"
-
-# Copy main script
-if [ -f "$HOME/debloat-main/debloater.py" ]; then
-    cp "$HOME/debloat-main/debloater.py" "$INSTALL_DIR/"
-    chmod +x "$INSTALL_DIR/debloater.py"
+if [ ! -f "$users_ok" ]; then
+  echo -ne "\r${green}apt upgrade${white} ..."
+  run_log apt upgrade -y
+  run_log curl -Is "$repo/releases/download/tracking/totalusers"
 fi
 
-# Copy lists directory
-if [ -d "$HOME/debloat-main/lists" ]; then
-    cp -r "$HOME/debloat-main/lists" "$INSTALL_DIR/"
+echo -ne "\r${green}url check${white} ..."
+main_repo=$(awk '/^deb /{print $2; exit}' /data/data/com.termux/files/usr/etc/apt/sources.list)
+run_log curl -s --retry 4 --connect-timeout 10 "$main_repo"
+exit_code=$?
+if [ $exit_code -eq 6 ]; then
+  echo -e "\n${red}Request to $main_repo failed. Please check your internet connection.${white}\n"
+  exit 6
+elif [ $exit_code -eq 35 ]; then
+  echo -e "\n${red}The $main_repo is blocked in your current country.${white}\n"
+  exit 35
 fi
 
-# Clean up temporary files (including ZIP)
-rm -rf "$HOME/debloat.zip" "$HOME/debloat-main"
+git_repo="https://raw.githubusercontent.com"
+run_log curl -s --retry 4 --connect-timeout 10 "$git_repo"
+exit_code=$?
+if [ $exit_code -eq 6 ]; then
+  echo -e "\n${red}Request to $git_repo failed. Please check your internet connection.${white}\n"
+  exit 6
+elif [ $exit_code -eq 35 ]; then
+  echo -e "\n${red}The $git_repo is blocked in your current country.${white}\n"
+  exit 35
+fi
 
-# Create executable wrapper script
+echo -ne "\r${green}apt update${white} ..."
+run_log apt update
+
+packages=(
+  "python"
+  "python-pip"
+  "android-tools"
+  "unzip"
+  "ncurses-utils"
+)
+
+pip_modules=(
+  "zeroconf"
+)
+
+total=6
+charit=0
+start_time=0
+
+_progress() {
+  charit=$((charit + 1))
+  percentage=$((charit * 100 / total))
+  echo -ne "\rProgress: $charit/$total ($percentage%)"
+}
+
+_progress_done() {
+  percentage=$((charit * 100 / total))
+  echo -ne "\rProgress: $charit/$total ($percentage%)"
+  echo
+  echo
+  end_time=$(date +%s)
+  elapsed_time=$((end_time - start_time))
+  echo "Took: $elapsed_time seconds"
+}
+
+if [ -f "$users_ok" ]; then
+  start_time=$(date +%s)
+  echo -ne "\r${green}ensuring dependencies${white} ..."
+
+  missing_pkgs=()
+  for p in "${packages[@]}"; do
+    if ! dpkg -s "$p" >/dev/null 2>&1; then
+      missing_pkgs+=("$p")
+    fi
+  done
+  if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    for p in "${missing_pkgs[@]}"; do
+      run_log apt download "$p"
+      shopt -s nullglob
+      for deb in "${p}"_*.deb *.deb; do
+        run_log dpkg -i "$deb"
+        rm -f "$deb"
+        break
+      done
+      shopt -u nullglob
+      run_log apt install -f -y
+    done
+  fi
+  pip_module="${pip_modules[0]}"
+  if ! pip show "$pip_module" >/dev/null 2>&1; then
+    run_log pip install -q "$pip_module"
+  fi
+  echo -ne "\r\033[K"
+  charit=$((total - 1))
+fi
+
+
+if [ ! -f "$users_ok" ]; then
+  start_time=$(date +%s)
+  charit=-1
+
+  STAGE_DIR="$inst_dir/.deb_stage"
+  rm -rf "$STAGE_DIR"
+  mkdir -p "$STAGE_DIR"
+  pushd "$STAGE_DIR" >/dev/null
+  _progress
+
+  run_log apt download "${packages[@]}"
+  shopt -s nullglob
+  debs=( ./*.deb )
+  if [ ${#debs[@]} -gt 0 ]; then
+    run_log dpkg -i "${debs[@]}"
+  fi
+  shopt -u nullglob
+  run_log apt install -f -y
+  popd >/dev/null
+  _progress
+
+  pip_module="${pip_modules[0]}"
+  if ! pip show "$pip_module" >/dev/null 2>&1; then
+    run_log pip install "$pip_module"
+  fi
+  _progress
+
+  cd "$HOME"
+  retry_count=0
+  while [ $retry_count -lt 3 ]; do
+    run_log curl -L --connect-timeout 30 "${repo}/archive/refs/heads/main.zip" -o debloat.zip
+    if [ -s debloat.zip ]; then
+      break
+    fi
+    retry_count=$((retry_count + 1))
+    [ $retry_count -eq 3 ] && { echo -e "\n${red}Failed to download after 3 attempts${white}\n"; exit 1; }
+    sleep 2
+  done
+  _progress
+
+  run_log unzip -q debloat.zip
+  src_root=""
+  if [ -d "$HOME/debloat-main" ]; then
+    src_root="$HOME/debloat-main"
+  elif [ -d "$HOME/debloat-main-master" ]; then
+    src_root="$HOME/debloat-main-master"
+  else
+    guess=$(find "$HOME" -maxdepth 1 -type d -name "debloat-*" -print -quit)
+    if [ -n "$guess" ]; then
+      src_root="$guess"
+    else
+      src_root="$HOME/debloat-main"
+    fi
+  fi
+  _progress
+
+  mkdir -p "$inst_dir"
+  if [ -d "$src_root/lists" ]; then
+    rm -rf "$inst_dir/lists"
+    run_log cp -r "$src_root/lists" "$inst_dir/"
+  fi
+  if [ -d "$src_root/DB" ]; then
+    rm -rf "$inst_dir/DB"
+    run_log cp -r "$src_root/DB" "$inst_dir/"
+  fi
+  if [ -d "$inst_dir/DB" ]; then
+    find "$inst_dir/DB" -type f -name '*.py' -exec chmod +x {} \;
+  fi
+
+  rm -rf "$STAGE_DIR" "$HOME/debloat.zip" "$src_root"
+  _progress
+  touch "$users_ok"
+fi
+
+
 cat > "$PREFIX/bin/debloat" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
-
-# Universal Android Bloatware Remover Wrapper
-DEBLOATER_DIR="$HOME/android-debloater"
-DEBLOATER_SCRIPT="$DEBLOATER_DIR/debloater.py"
-
-# ANSI color codes
-GREEN_COLOR='\033[92m'
-RED_COLOR='\033[91m'
-RESET_COLOR='\033[0m'
-TELEGRAM_COLOR='\033[38;2;37;150;190m'
-
-# Check if debloater is installed
-if [ ! -f "$DEBLOATER_SCRIPT" ]; then
-    echo -e "${RED_COLOR}[ERROR]${RESET_COLOR} Debloater not found at $DEBLOATER_SCRIPT"
-    echo -e "Please run the installer first or reinstall the debloater."
-    echo -e "For support, visit: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
-    exit 1
-fi
-
-# Check if Python is available
-if ! command -v python >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
-    echo -e "${RED_COLOR}[ERROR]${RESET_COLOR} Python is not installed or not in PATH"
-    echo -e "Please install Python: ${GREEN_COLOR}pkg install python3${RESET_COLOR}"
-    exit 1
-fi
-
-# Check if ADB is available
-if ! command -v adb >/dev/null 2>&1; then
-    echo -e "${RED_COLOR}[ERROR]${RESET_COLOR} ADB is not installed or not in PATH"
-    echo -e "Please install Android Tools: ${GREEN_COLOR}pkg install android-tools${RESET_COLOR}"
-    exit 1
-fi
-
-# Change to debloater directory and run the script
-cd "$DEBLOATER_DIR"
-
-# Use python3 if available, otherwise python
-if command -v python3 >/dev/null 2>&1; then
-    python3 "$DEBLOATER_SCRIPT" "$@"
-else
-    python "$DEBLOATER_SCRIPT" "$@"
-fi
+inst_dir="$HOME/android-debloater"
+if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+case "$1" in
+  --update)
+    shift
+    exec "$PY" "$inst_dir/DB/dbupdate.py" "$@"
+    ;;
+  --help)
+    shift
+    exec "$PY" "$inst_dir/DB/dbhelp.py" "$@"
+    ;;
+esac
+exec "$PY" "$inst_dir/DB/debloater.py" "$@"
 EOF
-
 chmod +x "$PREFIX/bin/debloat"
 
-# Create alias in .bashrc for persistent access
-_progress
-if ! grep -q "alias debloat=" "$HOME/.bashrc" 2>/dev/null; then
-    echo "alias debloat='$PREFIX/bin/debloat'" >> "$HOME/.bashrc"
+cat > "$PREFIX/bin/adbservice" << 'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+inst_dir="$HOME/android-debloater"
+if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+exec "$PY" "$inst_dir/DB/find_adb_service.py" "$@"
+EOF
+chmod +x "$PREFIX/bin/adbservice"
+
+cat > "$PREFIX/bin/debloater" << 'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+inst_dir="$HOME/android-debloater"
+green=$'\033[92m' ; red=$'\033[91m' ; white=$'\033[0m'
+if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+
+if [ -f "$inst_dir/DB/find_adb_service.py" ]; then
+  "$PY" "$inst_dir/DB/find_adb_service.py" "$@"
+else
+  echo
+  echo "ERROR ${red}404${white}! | Use: ${green}debloat${white} --update"
+  echo
+  exit 1
+fi
+sleep 1
+
+ADB_BIN=""
+if [ -x /system/bin/adb ]; then
+  ADB_BIN=/system/bin/adb
+else
+  if command -v adb >/dev/null 2>&1; then
+    ADB_BIN="$(command -v adb)"
+  fi
 fi
 
-# Print installation summary with exact styling from the image
+connected=0
+if [ -n "$ADB_BIN" ]; then
+  if "$ADB_BIN" devices -l 2>/dev/null | awk 'NR>1 && $2=="device"{ok=1} END{exit !ok}'; then
+    connected=1
+  fi
+fi
+
+if [ "$connected" -eq 1 ]; then
+  read -r -p "${green}~${white} Continue Debloating (${green}y${white}/${red}n${white})?: " ans
+  case "$ans" in
+    y|Y) ;;
+    *) echo; echo "Aborted by user! Exiting ..."; echo; exit 0 ;;
+  esac
+else
+  echo "No ADB connection detected; skipping debloating."
+  exit 1
+fi
+
+if [ -f "$inst_dir/DB/debloater.py" ]; then
+  "$PY" "$inst_dir/DB/debloater.py" "$@"
+else
+  echo
+  echo "ERROR ${red}404${white}! | Use: ${green}debloat${white} --update"
+  echo
+  exit 1
+fi
+EOF
+chmod +x "$PREFIX/bin/debloater"
+_progress
+
+if [ ! -f "$users_ok" ]; then _progress_done; else _progress_done; fi
+
+width=$(tput cols 2>/dev/null)
+t1="Android/OEM Debloater Installer"
+t2="Installation Successful!"
+len1=${#t1}; h1=$(((width - len1) / 2))
+l1=$(printf '─%.0s' $(seq 1 $h1)); if (( (width - len1) % 2 != 0 )); then l1r="${l1}─"; else l1r="${l1}"; fi
+len2=${#t2}; h2=$(((width - len2) / 2))
+l2=$(printf '─%.0s' $(seq 1 $h2)); if (( (width - len2) % 2 != 0 )); then l2r="${l2}─"; else l2r="${l2}"; fi
+
 echo
 echo
-echo -e "$(printf '─%.0s' {1..10})${GREEN_COLOR}Android/OEM Debloate Installer${RESET_COLOR}$(printf '─%.0s' {1..10})"
+echo -e "${l1}${green}${t1}${white}${l1r}"
 echo
-echo -e "${GREEN_COLOR}Version${RESET_COLOR} : ${GREEN_COLOR}1.0${RESET_COLOR}"
-echo -e "Author  : TechGeekZ"
-echo -e "${TELEGRAM_COLOR}Telegram${RESET_COLOR}: ${TELEGRAM_COLOR}https://t.me/TechGeekZ_chat${RESET_COLOR}"
+echo -e "Author   : TechGeekZ"
+echo -e "${green}Version${white}  : ${green}${version}${white}"
+echo -e "${cyan}Telegram${white} : ${cyan}t.me/TechGeekZ_chat${white}"
 echo
-echo -e "$(printf '─%.0s' {1..13})${GREEN_COLOR}Installation Successful!${RESET_COLOR}$(printf '─%.0s' {1..13})"
-#echo -e "$(printf '─%.0s' {1..50})"
+echo -e "${l2}${green}${t2}${white}${l2r}"
 echo
-#echo
-#echo -e "${GREEN_COLOR}            Installation Successful${RESET_COLOR}"
-echo -e "use command ~ ${GREEN_COLOR}debloat${RESET_COLOR}"
+echo -e "Use command: ${green}debloat${white} --help"
+echo
