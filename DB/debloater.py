@@ -374,7 +374,7 @@ def main():
 
     print_colored_brand(brand)
 
-    lists_dir = os.path.join(os.path.dirname(__file__), 'lists')
+    lists_dir = lists_dir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'lists'))
 
     if not os.path.exists(lists_dir):
         print(f"[Error] Lists directory not found: {lists_dir}")
