@@ -14,7 +14,7 @@ com.miui.global.packageinstaller (Ad-based App Installer)
 com.android.browser (Ad-based Browser)
 com.miui.player (Ad-based Music Player with)
 com.miui.videoplayer (Ad-based Video Player with)
-com.android.providers.downloads.ui (Downloads Application with Ads)
+#com.android.providers.downloads.ui (Downloads Application with Ads) -- Risky to delete
 com.mi.android.globalFileexplorer (Ad-based File Explorer)
 com.android.thememanager (Xiaomi Theme)
 
