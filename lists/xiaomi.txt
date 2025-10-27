@@ -6,6 +6,7 @@ com.miui.miservice (Tracking Application)
 com.miui.yellowpage (Tracking Application)
 com.xiaomi.glgm (Tracking Application)
 com.xiaomi.joyose (Tracking Application)
+com.miui.securitycenter (Security)
 
 #Ad-related
 com.miui.msa.global (Ad Serving Application)
@@ -15,6 +16,7 @@ com.miui.player (Ad-based Music Player with)
 com.miui.videoplayer (Ad-based Video Player with)
 com.android.providers.downloads.ui (Downloads Application with Ads)
 com.mi.android.globalFileexplorer (Ad-based File Explorer)
+com.android.thememanager (Xiaomi Theme)
 
 #Xiaomi Core Apps
 com.miui.cleanmaster (Cleaner)
@@ -28,6 +30,10 @@ com.miui.translation.xmcloud (Translation Service)
 com.miui.translationservice (Translation Service)
 com.mi.android.globalminusscreen (App Vault)
 com.mi.health (Mi Health)
+com.preff.kb.xm (Emoji Keyboard)
+com.xiaomi.scanner (Xiaomi Scanner)
+com.android.mms (Xiaomi SMS)
+com.miui.fm (Xiaomi Radio)
 
 #Xiaomi Financial Services
 com.mipay.wallet.id (Mi Pay)
@@ -39,9 +45,12 @@ com.micredit.in (Mi Credit)
 com.xiaomi.midrop (ShareMe / Mi Drop)
 com.xiaomi.mipicks (GetApps)
 com.xiaomi.mirecycle (Recycle Service)
+com.indus.appstore (Indus AppStore)
 
 #System Components
 com.mi.webkit.core (Xiaomi System WebView)
 android.autoinstalls.config.Xiaomi.ginkgo (Auto Installs from Play Store)
 cn.wps.xiaomi.abroad.lite (Mi Doc Viewer - XPS based)
 com.android.calendar (Calendar with Ads)
+
+#Third Party
