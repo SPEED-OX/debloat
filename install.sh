@@ -198,6 +198,22 @@ if [ ! -f "$users_ok" ]; then
   touch "$users_ok"
 fi
 
+echo -ne "\r${green}creating update info${white} ..."
+latest_sha=$(curl -s "https://api.github.com/repos/SPEED-OX/debloat/commits/main" | grep -m1 '"sha"' | cut -d'"' -f4)
+
+if [ -n "$latest_sha" ]; then
+  cat > "$inst_dir/.update_info" << EOF
+{
+  "last_commit_sha": "$latest_sha",
+  "last_update_time": "$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)",
+  "version": "$version"
+}
+EOF
+else
+  echo -e "\n${yellow}[Warning]${white} Failed to fetch commit SHA, .update_info not created"
+fi
+echo -ne "\r\033[K"
+
 
 cat > "$PREFIX/bin/debloat" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
