@@ -34,6 +34,7 @@ com.preff.kb.xm (Emoji Keyboard)
 com.xiaomi.scanner (Xiaomi Scanner)
 com.android.mms (Xiaomi SMS)
 com.miui.fm (Xiaomi Radio)
+com.duokan.phone.remotecontroller (Mi Remote)
 
 #Xiaomi Financial Services
 com.mipay.wallet.id (Mi Pay)

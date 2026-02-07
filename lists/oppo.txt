@@ -46,13 +46,14 @@ com.heytap.reader (HeyTap Reader)
 com.heytap.health (HeyTap Health)
 com.oneplus.market (HydrogenOS App Store Stub)
 com.oneplus.wallpaper (OnePlus Live Wallpapers)
+com.oneplus.mall (OnePlus Store)
 
 #Financial Services
 com.finshell.fin (Finshell Pay)
 com.oneplus.ifaaservice (IFAA Biometric Auth for Alipay)
 
 #File & App Management
-com.oneplus.backuprestore (OnePlus Switch)
+com.oneplus.backuprestore (OnePlus Switch/Clone)
 
 #System Components
 com.oneplus.commonoverlay.android (Android System Theme Pack)
