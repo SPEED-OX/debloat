@@ -114,6 +114,23 @@ def check_adb_connection():
         print(f"[Error] Failed to check device connection: {e}")
         return False
 
+def check_root_access():
+    try:
+        result = subprocess.run(
+            ['adb', 'shell', 'su', '-c', 'id'],
+            capture_output=True, text=True, timeout=5
+        )
+        output = (result.stdout + result.stderr).strip()
+        if result.returncode == 0 and 'uid=0' in output:
+            print(f"~ Root Access    : {green}ROOTED{white} (running with root privileges)")
+            return True
+        else:
+            print(f"~ Root Access    : {brown}NON-ROOTED{white} (standard ADB mode)")
+            return False
+    except Exception:
+        print(f"~ Root Access    : {brown}NON-ROOTED{white} (standard ADB mode)")
+        return False
+
 def get_device_brand():
     try:
         result = subprocess.run(
@@ -137,8 +154,9 @@ def get_device_brand():
 
 def print_colored_brand(brand):
     print()
-    if brand in BRAND_COLORS:
-        color = BRAND_COLORS[brand]
+    mapped = get_mapped_brand(brand)
+    color  = BRAND_COLORS.get(brand) or BRAND_COLORS.get(mapped, '')
+    if color:
         print(f"\n~{green} Device Brand{white} : {color}{brand.upper()}{white}")
     else:
         print(f"\n~{green} Device Brand{white} : {brand.upper()}")
@@ -319,31 +337,45 @@ def get_action_text(action):
     }
     return actions.get(action, "processing")
 
-def run_adb_command(package, action):
-    if action == 1:
-        cmd = f'adb shell pm uninstall -k --user 0 {package}'
-    elif action == 2:
-        cmd = f'adb shell pm uninstall --user 0 {package}'
-    elif action == 3:
-        cmd = f'adb shell cmd package install-existing {package}'
-    elif action == 4:
-        cmd = f'adb shell pm disable-user --user 0 {package}'
-    elif action == 5:
-        cmd = f'adb shell pm enable {package}'
-    else:
+def run_adb_command(package, action, is_rooted=False):
+    adb_base  = ['adb', 'shell']
+    su_prefix = ['su', '-c']
+
+    # Action map: action_id -> (non-root shell cmd, root shell cmd)
+    action_map = {
+        1: (f'pm uninstall -k --user 0 {package}', f'pm uninstall -k --user 0 {package}'),
+        2: (f'pm uninstall --user 0 {package}',    f'pm uninstall {package}'),
+        3: (f'cmd package install-existing {package}', f'cmd package install-existing {package}'),
+        4: (f'pm disable-user --user 0 {package}', f'pm disable-user --user 0 {package}'),
+        5: (f'pm enable {package}',                f'pm enable {package}'),
+    }
+
+    if action not in action_map:
         print("[Error] Unknown action.")
         return False
 
+    non_root_cmd, root_cmd = action_map[action]
+
+    if is_rooted:
+        cmd = adb_base + su_prefix + [root_cmd]
+    else:
+        cmd = adb_base + non_root_cmd.split()
+
     try:
-        result = subprocess.run(cmd.split(), capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         output = result.stdout.strip() or result.stderr.strip()
 
         if result.returncode == 0 and ("Success" in output or "Installed" in output or "enabled" in output or "disabled" in output):
             print(f"\n{green}SUCCESS !!{white}")
             return True
-        else:
-            print(f"{red}FAILED !!{white} {output}")
-            return False
+
+        # Protected system app — escalate to direct file removal
+        if is_rooted and action == 2 and "DELETE_FAILED_INTERNAL_ERROR" in output:
+            print(f"  {brown}→ Protected system app, escalating to direct removal...{white}")
+            return root_force_uninstall(package)
+
+        print(f"{red}FAILED !!{white} {output}")
+        return False
 
     except Exception as e:
         print(f"{red}FAILED !!{white} Command execution failed: {e}")
@@ -366,6 +398,8 @@ def main():
 
     if not check_adb_connection():
         sys.exit(1)
+
+    is_rooted = check_root_access()
 
     brand = get_device_brand()
     if not brand:
@@ -434,7 +468,7 @@ def main():
         package, app_name = matching_apps[idx]
         print(f"\n[{action_text}] {app_name} ({package})")
         
-        if run_adb_command(package, action):
+        if run_adb_command(package, action, is_rooted):
             successful_count += 1
         else:
             failed_count += 1
@@ -449,4 +483,8 @@ def main():
         print(f"\nFor troubleshooting failed operations, visit: {cyan}{telegram}{white}")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nOperation cancelled by user.")
+        sys.exit(0)
